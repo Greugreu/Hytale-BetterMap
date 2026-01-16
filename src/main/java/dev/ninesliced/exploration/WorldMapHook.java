@@ -1,11 +1,18 @@
 package dev.ninesliced.exploration;
 
 import com.hypixel.hytale.math.iterator.CircleSpiralIterator;
+import com.hypixel.hytale.protocol.Packet;
+import com.hypixel.hytale.protocol.packets.worldmap.MapChunk;
+import com.hypixel.hytale.protocol.packets.worldmap.UpdateWorldMap;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.world.WorldMapTracker;
 import dev.ninesliced.BetterMapConfig;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 import javax.annotation.Nonnull;
@@ -18,7 +25,7 @@ public class WorldMapHook {
             ReflectionHelper.setFieldValueRecursive(tracker, "viewRadiusOverride", 999);
 
             ExplorationTracker.PlayerExplorationData explorationData = ExplorationTracker.getInstance().getOrCreatePlayerData(player);
-            RestrictedSpiralIterator customIterator = new RestrictedSpiralIterator(explorationData);
+            RestrictedSpiralIterator customIterator = new RestrictedSpiralIterator(explorationData, tracker);
 
             ReflectionHelper.setFieldValueRecursive(tracker, "spiralIterator", customIterator);
 
@@ -106,6 +113,11 @@ public class WorldMapHook {
                 explorationData.setLastChunkPosition(playerChunkX, playerChunkZ);
 
                 forceTrackerUpdate(player, tracker, x, z);
+
+                // Manage loaded chunks (unload distant ones)
+                int mapChunkX = playerChunkX >> 1;
+                int mapChunkZ = playerChunkZ >> 1;
+                manageLoadedChunks(player, tracker, mapChunkX, mapChunkZ);
             }
         } catch (Exception e) {
             LOGGER.warning("[DEBUG] Exception in updateExplorationState: " + e.getMessage());
@@ -113,18 +125,73 @@ public class WorldMapHook {
         }
     }
 
+    private static void manageLoadedChunks(@Nonnull Player player, @Nonnull WorldMapTracker tracker, int cx, int cz) {
+        try {
+            Object loadedObj = ReflectionHelper.getFieldValueRecursive(tracker, "loaded");
+            if (!(loadedObj instanceof Set)) return;
+
+            @SuppressWarnings("unchecked")
+            Set<Long> loaded = (Set<Long>) loadedObj;
+
+            Object spiralIterator = ReflectionHelper.getFieldValueRecursive(tracker, "spiralIterator");
+            if (!(spiralIterator instanceof RestrictedSpiralIterator)) return;
+
+            List<Long> targetChunks = ((RestrictedSpiralIterator) spiralIterator).getTargetMapChunks();
+            Set<Long> targetSet = new HashSet<>(targetChunks);
+
+            List<Long> toUnload = new ArrayList<>();
+            List<Long> loadedSnapshot = new ArrayList<>(loaded);
+
+            List<MapChunk> unloadPackets = new ArrayList<>();
+
+            for (Long idx : loadedSnapshot) {
+                if (!targetSet.contains(idx)) {
+                    toUnload.add(idx);
+                    int mx = com.hypixel.hytale.math.util.ChunkUtil.xOfChunkIndex(idx);
+                    int mz = com.hypixel.hytale.math.util.ChunkUtil.zOfChunkIndex(idx);
+                    unloadPackets.add(new MapChunk(mx, mz, null));
+                }
+            }
+
+            if (toUnload.isEmpty()) return;
+
+            loaded.removeAll(toUnload);
+
+            UpdateWorldMap packet = new UpdateWorldMap(
+                unloadPackets.toArray(new MapChunk[0]),
+                null,
+                null
+            );
+            player.getPlayerConnection().write((Packet) packet);
+
+        } catch (Exception e) {
+            LOGGER.warning("Failed to manage loaded chunks: " + e.getMessage());
+        }
+    }
+
     public static class RestrictedSpiralIterator extends CircleSpiralIterator {
         private final ExplorationTracker.PlayerExplorationData data;
+        private final WorldMapTracker tracker;
         private Iterator<Long> currentIterator;
+        private List<Long> targetMapChunks = new ArrayList<>();
         private int currentGoalRadius;
         private volatile boolean stopped = false;
+        private int centerX;
+        private int centerZ;
+        private int currentRadius;
+        private int cleanupTimer = 0;
 
-        public RestrictedSpiralIterator(ExplorationTracker.PlayerExplorationData data) {
+        public RestrictedSpiralIterator(ExplorationTracker.PlayerExplorationData data, WorldMapTracker tracker) {
             this.data = data;
+            this.tracker = tracker;
         }
 
         public void stop() {
             this.stopped = true;
+        }
+
+        public List<Long> getTargetMapChunks() {
+            return targetMapChunks;
         }
 
         @Override
@@ -134,6 +201,9 @@ public class WorldMapHook {
                 return;
             }
 
+            this.centerX = cx;
+            this.centerZ = cz;
+            this.currentRadius = startRadius;
             this.currentGoalRadius = endRadius;
 
             Set<Long> mapChunks = new HashSet<>();
@@ -150,7 +220,69 @@ public class WorldMapHook {
                 mapChunks.add(mapChunkIdx);
             }
 
-            this.currentIterator = mapChunks.iterator();
+            List<Long> rankedChunks = new ArrayList<>(mapChunks);
+
+            // Sort by distance to cx/cz (closest first)
+            rankedChunks.sort(Comparator.comparingDouble(idx -> {
+                int mx = com.hypixel.hytale.math.util.ChunkUtil.xOfChunkIndex(idx);
+                int mz = com.hypixel.hytale.math.util.ChunkUtil.zOfChunkIndex(idx);
+                return Math.sqrt(Math.pow(mx - cx, 2) + Math.pow(mz - cz, 2));
+            }));
+
+            // Keep only the 10000 closest chunks
+            if (rankedChunks.size() > 3000) {
+                rankedChunks = rankedChunks.subList(0, 3000);
+            }
+
+            this.targetMapChunks = new ArrayList<>(rankedChunks);
+
+            // We supply the whole list to WorldMapTracker to ensure any skipped chunks (holes) are filled.
+            // WorldMapTracker efficiently skips already loaded chunks.
+            this.currentIterator = rankedChunks.iterator();
+
+            // Periodically cleanup far chunks (every 100 calls/ticks approx 5s)
+            if (++cleanupTimer > 100) {
+                cleanupTimer = 0;
+                cleanupFarChunks(rankedChunks);
+            }
+        }
+
+        private void cleanupFarChunks(List<Long> keepChunks) {
+            try {
+                Object loadedObj = ReflectionHelper.getFieldValue(tracker, "loaded");
+                if (loadedObj instanceof java.util.Set) {
+                    java.util.Set<?> loadedSet = (java.util.Set<?>) loadedObj; // Unbounded wildcard to avoid cast issues if HLongSet
+                    // However, we need to iterate and cast elements to Long.
+                    // HLongSet is Set<Long>, so elements are Long.
+
+                    if (loadedSet.size() > 10000) {
+                        java.util.Set<Long> keepSet = new HashSet<>(keepChunks);
+                        List<MapChunk> toRemovePackets = new ArrayList<>();
+
+                        // We must use iterator to remove safely
+                        Iterator<?> it = loadedSet.iterator();
+                        while (it.hasNext()) {
+                            Object obj = it.next();
+                            if (obj instanceof Long) {
+                                Long idx = (Long) obj;
+                                if (!keepSet.contains(idx)) {
+                                    it.remove();
+                                    int mx = com.hypixel.hytale.math.util.ChunkUtil.xOfChunkIndex(idx);
+                                    int mz = com.hypixel.hytale.math.util.ChunkUtil.zOfChunkIndex(idx);
+                                    toRemovePackets.add(new MapChunk(mx, mz, null));
+                                }
+                            }
+                        }
+
+                        if (!toRemovePackets.isEmpty()) {
+                            UpdateWorldMap packet = new UpdateWorldMap(toRemovePackets.toArray(new MapChunk[0]), null, null);
+                            tracker.getPlayer().getPlayerConnection().write((Packet)packet);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.warning("Failed to cleanup far chunks: " + e.getMessage());
+            }
         }
 
         @Override
@@ -166,7 +298,15 @@ public class WorldMapHook {
             if (stopped || currentIterator == null) {
                 return 0;
             }
-            return currentIterator.next();
+            long next = currentIterator.next();
+
+            // Update currentRadius based on distance
+            int mx = com.hypixel.hytale.math.util.ChunkUtil.xOfChunkIndex(next);
+            int mz = com.hypixel.hytale.math.util.ChunkUtil.zOfChunkIndex(next);
+            double dist = Math.sqrt(Math.pow(mx - centerX, 2) + Math.pow(mz - centerZ, 2));
+            this.currentRadius = (int) dist;
+
+            return next;
         }
 
         @Override
@@ -174,7 +314,7 @@ public class WorldMapHook {
             if (stopped) {
                 return currentGoalRadius;
             }
-            return Math.max(0, currentGoalRadius - 1);
+            return currentRadius;
         }
     }
 
@@ -184,8 +324,9 @@ public class WorldMapHook {
             if (spiralIterator instanceof RestrictedSpiralIterator) {
                 RestrictedSpiralIterator restrictedIterator = (RestrictedSpiralIterator) spiralIterator;
 
-                int chunkX = ChunkUtil.blockToChunkCoord(x);
-                int chunkZ = ChunkUtil.blockToChunkCoord(z);
+                // Use MAP chunk coordinates (>> 5 for block -> map chunk)
+                int chunkX = (int)Math.floor(x) >> 5;
+                int chunkZ = (int)Math.floor(z) >> 5;
 
                 restrictedIterator.init(chunkX, chunkZ, 0, 999);
                 LOGGER.info("[DEBUG] Forced tracker update for " + player.getDisplayName());
