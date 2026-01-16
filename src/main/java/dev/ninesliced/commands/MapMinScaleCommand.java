@@ -48,7 +48,6 @@ public class MapMinScaleCommand extends AbstractCommand {
                 return CompletableFuture.completedFuture(null);
             }
 
-            // Update config
             BetterMapConfig config = BetterMapConfig.getInstance();
             if (newMin >= config.getMaxScale()) {
                 context.sendMessage(Message.raw("Min scale must be less than max scale (" + config.getMaxScale() + ")").color(Color.RED));
@@ -57,7 +56,6 @@ public class MapMinScaleCommand extends AbstractCommand {
 
             config.setMinScale(newMin);
 
-            // Update runtime for the current world
             WorldMapHook.updateWorldMapConfigs(world);
             WorldMapHook.broadcastMapSettings(world);
 

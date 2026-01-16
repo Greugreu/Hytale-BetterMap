@@ -8,10 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * Tracks which chunks have been explored by the player.
- * Proxies to ExplorationComponent for persistence if available.
- */
 public class ExploredChunksTracker {
     private final Set<Long> memoryExploredChunks;
     private final ExplorationComponent persistentComponent;
@@ -99,9 +95,6 @@ public class ExploredChunksTracker {
         }
     }
 
-    /**
-     * Get the number of explored chunks
-     */
     public int getExploredCount() {
         if (persistentComponent != null) {
             return persistentComponent.getExploredChunks().size();
@@ -115,9 +108,6 @@ public class ExploredChunksTracker {
         }
     }
 
-    /**
-     * Clear all explored chunks
-     */
     public void clear() {
         if (persistentComponent != null) {
             persistentComponent.getExploredChunks().clear();

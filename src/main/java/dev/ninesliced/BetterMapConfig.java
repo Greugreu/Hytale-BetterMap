@@ -105,7 +105,6 @@ public class BetterMapConfig {
             }
         } catch (Exception e) {
             LOGGER.severe("Failed to load configuration: " + e.getMessage());
-            // Fail safe
             this.mapQuality = MapQuality.MEDIUM;
             updateLoggers();
         }

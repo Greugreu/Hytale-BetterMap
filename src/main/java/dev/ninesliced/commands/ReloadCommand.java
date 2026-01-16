@@ -27,7 +27,6 @@ public class ReloadCommand extends AbstractCommand {
     protected CompletableFuture<Void> execute(@NonNullDecl CommandContext context) {
         BetterMapConfig.getInstance().reload();
 
-        // Apply changes to all loaded worlds
         Universe universe = Universe.get();
         if (universe != null) {
             universe.getWorlds().values().forEach(world -> {
@@ -35,7 +34,6 @@ public class ReloadCommand extends AbstractCommand {
                     WorldMapHook.updateWorldMapConfigs(world);
                     WorldMapHook.broadcastMapSettings(world);
                 } catch (Exception e) {
-                    // Ignore errors for specific worlds
                 }
             });
         }

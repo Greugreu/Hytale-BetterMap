@@ -372,15 +372,12 @@ public class WorldMapHook {
             try {
                 Object loadedObj = ReflectionHelper.getFieldValue(tracker, "loaded");
                 if (loadedObj instanceof java.util.Set) {
-                    java.util.Set<?> loadedSet = (java.util.Set<?>) loadedObj; // Unbounded wildcard to avoid cast issues if HLongSet
-                    // However, we need to iterate and cast elements to Long.
-                    // HLongSet is Set<Long>, so elements are Long.
+                    java.util.Set<?> loadedSet = (java.util.Set<?>) loadedObj;
 
                     if (loadedSet.size() > 20000) {
                         java.util.Set<Long> keepSet = new HashSet<>(keepChunks);
                         List<MapChunk> toRemovePackets = new ArrayList<>();
 
-                        // We must use iterator to remove safely
                         Iterator<?> it = loadedSet.iterator();
                         while (it.hasNext()) {
                             Object obj = it.next();
@@ -421,7 +418,6 @@ public class WorldMapHook {
             }
             long next = currentIterator.next();
 
-            // Update currentRadius based on distance
             int mx = com.hypixel.hytale.math.util.ChunkUtil.xOfChunkIndex(next);
             int mz = com.hypixel.hytale.math.util.ChunkUtil.zOfChunkIndex(next);
             double dist = Math.sqrt(Math.pow(mx - centerX, 2) + Math.pow(mz - centerZ, 2));

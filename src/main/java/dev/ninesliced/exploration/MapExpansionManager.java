@@ -4,10 +4,6 @@ import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Manages the expansion of the explorable map area based on player exploration.
- * Maintains the boundaries of discovered territory and allows for persistent map growth.
- */
 public class MapExpansionManager {
 
     private final ExploredChunksTracker exploredChunks;
@@ -39,9 +35,6 @@ public class MapExpansionManager {
         exploredChunks.markChunksExplored(newChunks);
     }
 
-    /**
-     * Get the current exploration boundaries
-     */
     @Nonnull
     public MapBoundaries getCurrentBoundaries() {
         if (minChunkX == Integer.MAX_VALUE) {
@@ -73,9 +66,6 @@ public class MapExpansionManager {
         return width * height;
     }
 
-    /**
-     * Reset the exploration boundaries
-     */
     public void reset() {
         minChunkX = Integer.MAX_VALUE;
         maxChunkX = Integer.MIN_VALUE;

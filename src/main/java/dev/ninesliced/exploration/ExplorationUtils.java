@@ -14,17 +14,11 @@ public class ExplorationUtils {
 
     private static final Logger LOGGER = Logger.getLogger(ExplorationUtils.class.getName());
 
-    /**
-     * Get the exploration data for a player
-     */
     @Nullable
     public static ExplorationTracker.PlayerExplorationData getPlayerExplorationData(@Nonnull Player player) {
         return ExplorationTracker.getInstance().getPlayerData(player);
     }
 
-    /**
-     * Get the number of chunks explored by a player
-     */
     public static int getExploredChunkCount(@Nonnull Player player) {
         ExplorationTracker.PlayerExplorationData data = getPlayerExplorationData(player);
         if (data == null) {
@@ -94,9 +88,6 @@ public class ExplorationUtils {
         );
     }
 
-    /**
-     * Check if a specific chunk has been explored by a player
-     */
     public static boolean isChunkExplored(@Nonnull Player player, int chunkX, int chunkZ) {
         ExplorationTracker.PlayerExplorationData data = getPlayerExplorationData(player);
         if (data == null) {
@@ -106,9 +97,6 @@ public class ExplorationUtils {
         return data.getExploredChunks().isChunkExplored(chunkIndex);
     }
 
-    /**
-     * Format exploration boundaries for display
-     */
     @Nonnull
     public static String formatBoundaries(@Nullable MapExpansionManager.MapBoundaries boundaries) {
         if (boundaries == null) {

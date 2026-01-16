@@ -45,9 +45,6 @@ public class ReflectionHelper {
         return null;
     }
 
-    /**
-     * Set the value of a field on an object instance
-     */
     public static boolean setFieldValue(@Nonnull Object instance, @Nonnull String fieldName, @Nullable Object value) {
         try {
             Field field = getField(instance.getClass(), fieldName);
@@ -110,9 +107,6 @@ public class ReflectionHelper {
         return null;
     }
 
-    /**
-     * Get a field value from an object, searching parent classes if needed
-     */
     @Nullable
     public static Object getFieldValueRecursive(@Nonnull Object instance, @Nonnull String fieldName) {
         try {
@@ -126,9 +120,6 @@ public class ReflectionHelper {
         return null;
     }
 
-    /**
-     * Set a field value on an object, searching parent classes if needed
-     */
     public static boolean setFieldValueRecursive(@Nonnull Object instance, @Nonnull String fieldName, @Nullable Object value) {
         try {
             Field field = getFieldRecursive(instance.getClass(), fieldName);
