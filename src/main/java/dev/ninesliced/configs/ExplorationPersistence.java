@@ -1,9 +1,10 @@
 package dev.ninesliced.configs;
 
-import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.component.Ref;
-import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.entity.UUIDComponent;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.command.system.CommandSender;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import dev.ninesliced.exploration.ExplorationTracker;
 import dev.ninesliced.utils.ChunkUtil;
 
@@ -51,14 +52,12 @@ public class ExplorationPersistence {
      * @param worldName The name of the world to load data from.
      */
     public void load(@Nonnull Player player, @Nonnull String worldName) {
-        Ref<EntityStore> ref = player.getReference();
-        if (ref == null || !ref.isValid()) return;
-        UUIDComponent uuidComp = ref.getStore().getComponent(ref, UUIDComponent.getComponentType());
-        if (uuidComp == null) return;
-        UUID playerUUID = uuidComp.getUuid();
+        UUID playerUUID = ((CommandSender) player).getUuid();
+        if (playerUUID == null)
+            return;
 
         Path worldDir = storageDir.resolve(worldName);
-        Path file = worldDir.resolve(playerUUID.toString() + ".bin");
+        Path file = worldDir.resolve(playerUUID + ".bin");
 
         if (!Files.exists(file)) {
             return;
