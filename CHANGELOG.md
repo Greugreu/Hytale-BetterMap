@@ -79,4 +79,4 @@ We have expanded the command list to allow in-game configuration changes.
 
 **Credits**
 
-* Mod created by Paralaxe and Theobosse (Ninesliced).
+* Mod created by Paralaxe and Theobosse (Team Ninesliced).
