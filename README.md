@@ -40,7 +40,7 @@ This plugin includes a full suite of commands for players and admins to manage m
 ### Configuration Commands
 
 * `/bettermap min <value>`
-* **Description:** Sets the minimum zoom scale (how far you can zoom out). Lower values allow seeing more of the map at once. Must be greater than 2.0.
+* **Description:** Sets the minimum zoom scale (how far you can zoom out). Lower values allow seeing more of the map at once. Must be greater than 2.0. The default minimum zoom in base hytale is 32.
 * **Permission:** `command.bettermap.min`
 
 
