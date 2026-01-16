@@ -268,6 +268,16 @@ public class BetterMapConfig {
     /**
      * Sets the exploration radius and saves the config.
      *
+     * @param explorationRadius The new exploration radius.
+     */
+    public void setExplorationRadius(int explorationRadius) {
+        this.explorationRadius = explorationRadius;
+        save();
+    }
+
+    /**
+     * Sets the map quality and saves the config.
+     *
      * @param mapQuality The new map quality
      */
     public void setQuality(MapQuality mapQuality) {
