@@ -22,7 +22,6 @@ public class WorldMapHook {
         try {
             ReflectionHelper.setFieldValueRecursive(tracker, "viewRadiusOverride", 999);
 
-            // Enhance Zoom capability
             World world = player.getWorld();
             if (world != null) {
                 sendMapSettingsToPlayer(player);
@@ -105,11 +104,9 @@ public class WorldMapHook {
             com.hypixel.hytale.server.core.universe.world.worldmap.WorldMapSettings settings = manager.getWorldMapSettings();
             if (settings == null) return;
 
-            // Use configured quality
             BetterMapConfig.MapQuality quality = BetterMapConfig.getInstance().getActiveMapQuality();
             ReflectionHelper.setFieldValueRecursive(settings, "imageScale", quality.scale);
 
-            // Clear cache to force regenerate with new resolution
             manager.clearImages();
 
             LOGGER.info("Modified WorldMapSettings imageScale to " + quality.scale + " (" + quality + " quality) for world: " + world.getName());
@@ -141,7 +138,6 @@ public class WorldMapHook {
 
                 forceTrackerUpdate(player, tracker, x, z);
 
-                // Manage loaded chunks (unload distant ones)
                 int mapChunkX = playerChunkX >> 1;
                 int mapChunkZ = playerChunkZ >> 1;
                 manageLoadedChunks(player, tracker, mapChunkX, mapChunkZ);
@@ -202,7 +198,6 @@ public class WorldMapHook {
             if (spiralIterator instanceof RestrictedSpiralIterator) {
                 RestrictedSpiralIterator restrictedIterator = (RestrictedSpiralIterator) spiralIterator;
 
-                // Use MAP chunk coordinates (>> 5 for block -> map chunk)
                 int chunkX = (int) Math.floor(x) >> 5;
                 int chunkZ = (int) Math.floor(z) >> 5;
 
@@ -226,8 +221,6 @@ public class WorldMapHook {
                 packet.maxScale = config.getMaxScale();
             }
 
-            // Also try to set fields on the settings object directly if they exist
-            // This ensures if the packet is regenerated it uses these values
             ReflectionHelper.setFieldValueRecursive(settings, "minScale", config.getMinScale());
             ReflectionHelper.setFieldValueRecursive(settings, "maxScale", config.getMaxScale());
 
@@ -238,13 +231,10 @@ public class WorldMapHook {
 
     public static void broadcastMapSettings(@Nonnull World world) {
         try {
-            // Attempt to call mapManager.sendSettings() which likely broadcasts
             Object mapManager = world.getWorldMapManager();
             java.lang.reflect.Method sendSettings = mapManager.getClass().getMethod("sendSettings");
             sendSettings.invoke(mapManager);
         } catch (Exception e) {
-            // Fallback: iterate players if we can't invoke method
-            // But we don't have easy access to player list here without Universe
             LOGGER.fine("Could not invoke mapManager.sendSettings(): " + e.getMessage());
         }
     }
@@ -324,28 +314,24 @@ public class WorldMapHook {
             Set<Long> boundaryChunks = new HashSet<>();
 
             if (bounds.minX != Integer.MAX_VALUE) {
-                // Add corners of the map to boundary chunks
                 boundaryChunks.add(com.hypixel.hytale.math.util.ChunkUtil.indexChunk(bounds.minX >> 1, bounds.minZ >> 1));
                 boundaryChunks.add(com.hypixel.hytale.math.util.ChunkUtil.indexChunk(bounds.maxX >> 1, bounds.minZ >> 1));
                 boundaryChunks.add(com.hypixel.hytale.math.util.ChunkUtil.indexChunk(bounds.minX >> 1, bounds.maxZ >> 1));
                 boundaryChunks.add(com.hypixel.hytale.math.util.ChunkUtil.indexChunk(bounds.maxX >> 1, bounds.maxZ >> 1));
             }
 
-            // Add non-boundary chunks to ranked list
             for (Long chunk : mapChunks) {
                 if (!boundaryChunks.contains(chunk)) {
                     rankedChunks.add(chunk);
                 }
             }
 
-            // Sort by distance to cx/cz (closest first)
             rankedChunks.sort(Comparator.comparingDouble(idx -> {
                 int mx = com.hypixel.hytale.math.util.ChunkUtil.xOfChunkIndex(idx);
                 int mz = com.hypixel.hytale.math.util.ChunkUtil.zOfChunkIndex(idx);
                 return Math.sqrt(Math.pow(mx - cx, 2) + Math.pow(mz - cz, 2));
             }));
 
-            // Keep only the closest chunks, reserving space for boundaries
             int maxChunks = BetterMapConfig.getInstance().getActiveMapQuality().maxChunks;
             int searchLimit = maxChunks - boundaryChunks.size();
             if (searchLimit < 0) searchLimit = 0;
@@ -357,11 +343,8 @@ public class WorldMapHook {
             this.targetMapChunks = new ArrayList<>(boundaryChunks);
             this.targetMapChunks.addAll(rankedChunks);
 
-            // We supply the whole list to WorldMapTracker to ensure any skipped chunks (holes) are filled.
-            // WorldMapTracker efficiently skips already loaded chunks.
             this.currentIterator = rankedChunks.iterator();
 
-            // Periodically cleanup far chunks (every 100 calls/ticks approx 5s)
             if (++cleanupTimer > 100) {
                 cleanupTimer = 0;
                 cleanupFarChunks(rankedChunks);

@@ -16,9 +16,6 @@ public class MapExpansionManager {
         this.exploredChunks = exploredChunks;
     }
 
-    /**
-     * Update the map boundaries based on newly explored chunks
-     */
     public void updateBoundaries(int playerChunkX, int playerChunkZ, int viewRadius) {
         Set<Long> newChunks = ChunkUtil.getChunksInCircularArea(playerChunkX, playerChunkZ, viewRadius);
 
@@ -43,9 +40,6 @@ public class MapExpansionManager {
         return new MapBoundaries(minChunkX, maxChunkX, minChunkZ, maxChunkZ);
     }
 
-    /**
-     * Get all chunks that are within the expanded map area
-     */
     @Nonnull
     public Set<Long> getExpandedMapChunks() {
         if (minChunkX == Integer.MAX_VALUE) {
@@ -54,9 +48,6 @@ public class MapExpansionManager {
         return ChunkUtil.getChunksInRectangularArea(minChunkX, maxChunkX, minChunkZ, maxChunkZ);
     }
 
-    /**
-     * Calculate the total explorable area in square chunks
-     */
     public long getTotalExploredArea() {
         if (minChunkX == Integer.MAX_VALUE) {
             return 0;
@@ -74,9 +65,6 @@ public class MapExpansionManager {
         exploredChunks.clear();
     }
 
-    /**
-     * Represents the boundaries of explored map area
-     */
     public static class MapBoundaries {
         public final int minX;
         public final int maxX;

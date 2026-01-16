@@ -6,10 +6,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.logging.Logger;
 
-/**
- * Provides utility methods for exploration management and statistics.
- * Useful for querying and managing exploration state.
- */
 public class ExplorationUtils {
 
     private static final Logger LOGGER = Logger.getLogger(ExplorationUtils.class.getName());
@@ -27,9 +23,6 @@ public class ExplorationUtils {
         return data.getExploredChunks().getExploredCount();
     }
 
-    /**
-     * Get the explored area boundaries for a player
-     */
     @Nullable
     public static MapExpansionManager.MapBoundaries getExplorationBoundaries(@Nonnull Player player) {
         ExplorationTracker.PlayerExplorationData data = getPlayerExplorationData(player);
@@ -39,9 +32,6 @@ public class ExplorationUtils {
         return data.getMapExpansion().getCurrentBoundaries();
     }
 
-    /**
-     * Get the total explored area in square chunks
-     */
     public static long getTotalExploredArea(@Nonnull Player player) {
         ExplorationTracker.PlayerExplorationData data = getPlayerExplorationData(player);
         if (data == null) {
@@ -50,9 +40,6 @@ public class ExplorationUtils {
         return data.getMapExpansion().getTotalExploredArea();
     }
 
-    /**
-     * Reset exploration data for a player
-     */
     public static void resetExploration(@Nonnull Player player) {
         ExplorationTracker.PlayerExplorationData data = getPlayerExplorationData(player);
         if (data != null) {
@@ -61,9 +48,6 @@ public class ExplorationUtils {
         }
     }
 
-    /**
-     * Get exploration statistics as a formatted string
-     */
     @Nonnull
     public static String getExplorationStats(@Nonnull Player player) {
         ExplorationTracker.PlayerExplorationData data = getPlayerExplorationData(player);

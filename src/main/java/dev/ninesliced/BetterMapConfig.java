@@ -50,7 +50,6 @@ public class BetterMapConfig {
                 save();
             }
 
-            // Set active quality after initial load
             this.activeMapQuality = this.mapQuality;
         } catch (IOException e) {
             LOGGER.severe("Failed to initialize configuration: " + e.getMessage());

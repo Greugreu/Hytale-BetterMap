@@ -6,17 +6,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.logging.Logger;
 
-/**
- * Utility class for reflection operations needed to modify map behavior.
- * Provides safe reflection access with error handling and logging.
- */
 public class ReflectionHelper {
 
     private static final Logger LOGGER = Logger.getLogger(ReflectionHelper.class.getName());
 
-    /**
-     * Get a field from a class, making it accessible if needed
-     */
     @Nullable
     public static Field getField(@Nonnull Class<?> clazz, @Nonnull String fieldName) {
         try {
@@ -29,9 +22,6 @@ public class ReflectionHelper {
         }
     }
 
-    /**
-     * Get the value of a field from an object instance
-     */
     @Nullable
     public static Object getFieldValue(@Nonnull Object instance, @Nonnull String fieldName) {
         try {
@@ -58,9 +48,6 @@ public class ReflectionHelper {
         return false;
     }
 
-    /**
-     * Get a method from a class by name and parameter types
-     */
     @Nullable
     public static Method getMethod(@Nonnull Class<?> clazz, @Nonnull String methodName, Class<?>... parameterTypes) {
         try {
@@ -73,9 +60,6 @@ public class ReflectionHelper {
         }
     }
 
-    /**
-     * Invoke a method on an object instance
-     */
     @Nullable
     public static Object invokeMethod(@Nonnull Object instance, @Nonnull String methodName, Class<?>[] parameterTypes, Object[] args) {
         try {
@@ -89,9 +73,6 @@ public class ReflectionHelper {
         return null;
     }
 
-    /**
-     * Get a field from an object, trying parent classes if not found
-     */
     @Nullable
     public static Field getFieldRecursive(@Nonnull Class<?> clazz, @Nonnull String fieldName) {
         Class<?> current = clazz;

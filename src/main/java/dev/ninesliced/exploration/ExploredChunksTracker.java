@@ -13,10 +13,6 @@ public class ExploredChunksTracker {
     private final ExplorationComponent persistentComponent;
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    public ExploredChunksTracker() {
-        this(null);
-    }
-
     public ExploredChunksTracker(@Nullable ExplorationComponent component) {
         this.persistentComponent = component;
         if (component == null) {
@@ -26,9 +22,6 @@ public class ExploredChunksTracker {
         }
     }
 
-    /**
-     * Mark a chunk as explored
-     */
     public void markChunkExplored(long chunkIndex) {
         if (persistentComponent != null) {
             persistentComponent.addExploredChunk(chunkIndex);
@@ -43,9 +36,6 @@ public class ExploredChunksTracker {
         }
     }
 
-    /**
-     * Mark multiple chunks as explored (e.g., from a circular area around player)
-     */
     public void markChunksExplored(@Nonnull Set<Long> chunkIndices) {
         if (persistentComponent != null) {
             for (Long chunk : chunkIndices) {
@@ -62,9 +52,6 @@ public class ExploredChunksTracker {
         }
     }
 
-    /**
-     * Check if a chunk has been explored
-     */
     public boolean isChunkExplored(long chunkIndex) {
         if (persistentComponent != null) {
             return persistentComponent.isExplored(chunkIndex);
@@ -78,9 +65,6 @@ public class ExploredChunksTracker {
         }
     }
 
-    /**
-     * Get a copy of all explored chunks
-     */
     @Nonnull
     public Set<Long> getExploredChunks() {
         if (persistentComponent != null) {
