@@ -91,6 +91,29 @@ public class WorldMapHook {
         }
     }
 
+    public static void hookWorldMapResolution(@Nonnull com.hypixel.hytale.server.core.universe.world.World world) {
+        try {
+            LOGGER.info("Hooking WorldMap resolution for world: " + world.getName());
+            com.hypixel.hytale.server.core.universe.world.worldmap.WorldMapManager manager = world.getWorldMapManager();
+            if (manager == null) return;
+
+            LOGGER.info("Modifying WorldMapSettings for world: " + world.getName());
+            com.hypixel.hytale.server.core.universe.world.worldmap.WorldMapSettings settings = manager.getWorldMapSettings();
+            if (settings == null) return;
+
+            // Use configured quality
+            BetterMapConfig.MapQuality quality = BetterMapConfig.getInstance().getMapQuality();
+            ReflectionHelper.setFieldValueRecursive(settings, "imageScale", quality.scale);
+            
+            // Clear cache to force regenerate with new resolution
+            manager.clearImages();
+            
+            LOGGER.info("Modified WorldMapSettings imageScale to " + quality.scale + " (" + quality + " quality) for world: " + world.getName());
+        } catch (Exception e) {
+            LOGGER.warning("Failed to hook WorldMap resolution: " + e.getMessage());
+        }
+    }
+
     public static void updateExplorationState(@Nonnull Player player, @Nonnull WorldMapTracker tracker, double x, double z) {
         try {
             ExplorationTracker explorationTracker = ExplorationTracker.getInstance();
@@ -220,7 +243,24 @@ public class WorldMapHook {
                 mapChunks.add(mapChunkIdx);
             }
 
-            List<Long> rankedChunks = new ArrayList<>(mapChunks);
+            List<Long> rankedChunks = new ArrayList<>();
+            MapExpansionManager.MapBoundaries bounds = data.getMapExpansion().getCurrentBoundaries();
+            Set<Long> boundaryChunks = new HashSet<>();
+
+            if (bounds.minX != Integer.MAX_VALUE) {
+                // Add corners of the map to boundary chunks
+                boundaryChunks.add(com.hypixel.hytale.math.util.ChunkUtil.indexChunk(bounds.minX >> 1, bounds.minZ >> 1));
+                boundaryChunks.add(com.hypixel.hytale.math.util.ChunkUtil.indexChunk(bounds.maxX >> 1, bounds.minZ >> 1));
+                boundaryChunks.add(com.hypixel.hytale.math.util.ChunkUtil.indexChunk(bounds.minX >> 1, bounds.maxZ >> 1));
+                boundaryChunks.add(com.hypixel.hytale.math.util.ChunkUtil.indexChunk(bounds.maxX >> 1, bounds.maxZ >> 1));
+            }
+
+            // Add non-boundary chunks to ranked list
+            for (Long chunk : mapChunks) {
+                if (!boundaryChunks.contains(chunk)) {
+                    rankedChunks.add(chunk);
+                }
+            }
 
             // Sort by distance to cx/cz (closest first)
             rankedChunks.sort(Comparator.comparingDouble(idx -> {
@@ -229,12 +269,17 @@ public class WorldMapHook {
                 return Math.sqrt(Math.pow(mx - cx, 2) + Math.pow(mz - cz, 2));
             }));
 
-            // Keep only the 10000 closest chunks
-            if (rankedChunks.size() > 3000) {
-                rankedChunks = rankedChunks.subList(0, 3000);
+            // Keep only the closest chunks, reserving space for boundaries
+            int maxChunks = BetterMapConfig.getInstance().getMapQuality().maxChunks;
+            int searchLimit = maxChunks - boundaryChunks.size();
+            if (searchLimit < 0) searchLimit = 0;
+
+            if (rankedChunks.size() > searchLimit) {
+                rankedChunks = rankedChunks.subList(0, searchLimit);
             }
 
-            this.targetMapChunks = new ArrayList<>(rankedChunks);
+            this.targetMapChunks = new ArrayList<>(boundaryChunks);
+            this.targetMapChunks.addAll(rankedChunks);
 
             // We supply the whole list to WorldMapTracker to ensure any skipped chunks (holes) are filled.
             // WorldMapTracker efficiently skips already loaded chunks.
@@ -255,7 +300,7 @@ public class WorldMapHook {
                     // However, we need to iterate and cast elements to Long.
                     // HLongSet is Set<Long>, so elements are Long.
 
-                    if (loadedSet.size() > 10000) {
+                    if (loadedSet.size() > 20000) {
                         java.util.Set<Long> keepSet = new HashSet<>(keepChunks);
                         List<MapChunk> toRemovePackets = new ArrayList<>();
 

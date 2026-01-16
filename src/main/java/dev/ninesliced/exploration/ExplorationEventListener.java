@@ -42,6 +42,7 @@ public class ExplorationEventListener {
                 WorldMapTracker tracker = player.getWorldMapTracker();
                 if (tracker != null) {
                     WorldMapHook.hookPlayerMapTracker(player, tracker);
+                    WorldMapHook.hookWorldMapResolution(world);
                 }
 
                 LOGGER.info("Exploration tracking initialized for player: " + playerName);
@@ -156,6 +157,7 @@ public class ExplorationEventListener {
                     if (tracker != null) {
                         LOGGER.info("[DEBUG] Hooking tracker for world " + newWorldName);
                         WorldMapHook.hookPlayerMapTracker(player, tracker);
+                        WorldMapHook.hookWorldMapResolution(newWorld);
 
                         WorldMapTracker finalTracker = tracker;
                     ExplorationTicker.getInstance().scheduleUpdate(() -> {

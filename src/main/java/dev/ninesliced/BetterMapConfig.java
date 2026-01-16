@@ -2,6 +2,9 @@ package dev.ninesliced;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,8 +17,23 @@ public class BetterMapConfig {
 
     private int explorationRadius = 16;
     private int updateRateMs = 500;
+    private MapQuality mapQuality = MapQuality.MEDIUM;
 
     private transient Path configPath;
+
+    public enum MapQuality {
+        LOW(0.25f, 20000),
+        MEDIUM(0.5f, 10000),
+        HIGH(1.0f, 3000);
+
+        public final float scale;
+        public final int maxChunks;
+
+        MapQuality(float scale, int maxChunks) {
+            this.scale = scale;
+            this.maxChunks = maxChunks;
+        }
+    }
 
     public BetterMapConfig() {
     }
@@ -48,14 +66,36 @@ public class BetterMapConfig {
 
     public void load() {
         try (Reader reader = Files.newBufferedReader(configPath)) {
-            BetterMapConfig loaded = GSON.fromJson(reader, BetterMapConfig.class);
-            if (loaded != null) {
-                this.explorationRadius = loaded.explorationRadius;
-                this.updateRateMs = loaded.updateRateMs;
-                LOGGER.info("Configuration loaded from " + configPath);
+            JsonElement element = JsonParser.parseReader(reader);
+            
+            if (element.isJsonObject()) {
+                JsonObject jsonObject = element.getAsJsonObject();
+                BetterMapConfig loaded = GSON.fromJson(element, BetterMapConfig.class);
+                
+                boolean needsSave = false;
+
+                if (loaded != null) {
+                    this.explorationRadius = loaded.explorationRadius;
+                    this.updateRateMs = loaded.updateRateMs;
+                    
+                    if (jsonObject.has("mapQuality")) {
+                        this.mapQuality = loaded.mapQuality;
+                    } else {
+                        this.mapQuality = MapQuality.MEDIUM;
+                        needsSave = true;
+                    }
+                    
+                    if (needsSave) {
+                        save();
+                    }
+                    
+                    LOGGER.info("Configuration loaded from " + configPath);
+                }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.severe("Failed to load configuration: " + e.getMessage());
+            // Fail safe
+            this.mapQuality = MapQuality.MEDIUM;
         }
     }
 
@@ -80,5 +120,9 @@ public class BetterMapConfig {
     
     public int getUpdateRateMs() {
         return updateRateMs;
+    }
+
+    public MapQuality getMapQuality() {
+        return mapQuality;
     }
 }
