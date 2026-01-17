@@ -5,7 +5,6 @@ import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.hypixel.hytale.server.core.command.system.arguments.types.ArgumentType;
 import dev.ninesliced.configs.BetterMapConfig;
 
 import javax.annotation.Nonnull;
@@ -17,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
  * Command to toggle debug logging for the BetterMap mod.
  */
 public class DebugCommand extends AbstractCommand {
-    private final RequiredArg<Boolean> debugValueArg = (RequiredArg<Boolean>) this.withRequiredArg("value", "Enable/Disable debug logs", (ArgumentType) ArgTypes.BOOLEAN);
+    private final RequiredArg<Boolean> debugValueArg = this.withRequiredArg("value", "Enable/Disable debug logs", ArgTypes.BOOLEAN);
 
     /**
      * Constructs the Debug command.

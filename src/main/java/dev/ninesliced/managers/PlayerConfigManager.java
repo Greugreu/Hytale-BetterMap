@@ -48,7 +48,6 @@ public class PlayerConfigManager {
         return INSTANCE;
     }
 
-    @Nullable
     public PlayerConfig getPlayerConfig(UUID uuid) {
         if (!playerConfigs.containsKey(uuid)) {
             loadPlayerConfig(uuid);

@@ -5,9 +5,7 @@ import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.hypixel.hytale.server.core.command.system.arguments.types.ArgumentType;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.universe.world.World;
 import dev.ninesliced.configs.PlayerConfig;
 import dev.ninesliced.managers.PlayerConfigManager;
 import dev.ninesliced.utils.WorldMapHook;
@@ -22,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
  * Command to set the player's minimum map scale.
  */
 public class PlayerMinScaleCommand extends AbstractCommand {
-    private final RequiredArg<Float> scaleArg = (RequiredArg<Float>) this.withRequiredArg("scale", "Min scale value", (ArgumentType) ArgTypes.FLOAT);
+    private final RequiredArg<Float> scaleArg = this.withRequiredArg("scale", "Min scale value", ArgTypes.FLOAT);
 
     public PlayerMinScaleCommand() {
         super("minscale", "Set player min map scale");

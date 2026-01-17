@@ -40,12 +40,11 @@ public class LocationHudProvider {
      * @param store          The entity store.
      * @param commandBuffer  The command buffer for operations.
      */
-    @SuppressWarnings("unchecked")
     public void showHud(float dt, int index, @Nonnull ArchetypeChunk<EntityStore> archetypeChunk,
                        @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> commandBuffer) {
-        Holder holder = EntityUtils.toHolder(index, archetypeChunk);
-        Player player = (Player) holder.getComponent(Player.getComponentType());
-        PlayerRef playerRef = (PlayerRef) holder.getComponent(PlayerRef.getComponentType());
+        Holder<EntityStore> holder = EntityUtils.toHolder(index, archetypeChunk);
+        Player player = holder.getComponent(Player.getComponentType());
+        PlayerRef playerRef = holder.getComponent(PlayerRef.getComponentType());
 
         if (player == null || playerRef == null) {
             return;
@@ -60,7 +59,7 @@ public class LocationHudProvider {
         PlayerConfig config = PlayerConfigManager.getInstance().getPlayerConfig(playerRef.getUuid());
 
         LocationHud hud = this.huds.get(playerRef);
-        hud.setEnabled(config == null ? false : config.isLocationEnabled());
+        hud.setEnabled(config != null && config.isLocationEnabled());
 
         hud.updateHud(dt, index, archetypeChunk, store, commandBuffer);
         hud.show();

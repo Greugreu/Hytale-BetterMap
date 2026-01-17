@@ -3,6 +3,7 @@ package dev.ninesliced.listeners;
 import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.event.events.player.AddPlayerToWorldEvent;
 import com.hypixel.hytale.server.core.event.events.player.DrainPlayerFromWorldEvent;
@@ -14,7 +15,6 @@ import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.WorldMapTracker;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import dev.ninesliced.exploration.*;
 import dev.ninesliced.managers.ExplorationManager;
 import dev.ninesliced.managers.PlayerConfigManager;
@@ -45,7 +45,7 @@ public class ExplorationEventListener {
             String playerName = player.getDisplayName();
 
             if (player.getReference() != null && player.getReference().isValid()) {
-                UUID uuid = player.getReference().getStore().getComponent(player.getReference(), UUIDComponent.getComponentType()).getUuid();
+                UUID uuid = ((CommandSender) player).getUuid();
                 PlayerConfigManager.getInstance().loadPlayerConfig(uuid);
             }
 
@@ -59,6 +59,9 @@ public class ExplorationEventListener {
             LOGGER.info("Player ready (initial join): " + playerName);
 
             World world = player.getWorld();
+            if (world == null)
+                return;
+
             String worldName = world.getName();
             playerWorlds.put(playerName, worldName);
 
@@ -67,17 +70,13 @@ public class ExplorationEventListener {
                 ExplorationManager.getInstance().loadPlayerData(player);
 
                 WorldMapTracker tracker = player.getWorldMapTracker();
-                if (tracker != null) {
-                    WorldMapHook.hookPlayerMapTracker(player, tracker);
-                    WorldMapHook.hookWorldMapResolution(world);
-                }
+                WorldMapHook.hookPlayerMapTracker(player, tracker);
+                WorldMapHook.hookWorldMapResolution(world);
 
                 LOGGER.info("Exploration tracking initialized for player: " + playerName);
             } else {
                 WorldMapTracker tracker = player.getWorldMapTracker();
-                if (tracker != null) {
-                    WorldMapHook.restoreVanillaMapTracker(player, tracker);
-                }
+                WorldMapHook.restoreVanillaMapTracker(player, tracker);
                 LOGGER.info("Player " + playerName + " joined non-default world; leaving map vanilla.");
             }
         } catch (Exception e) {
@@ -107,15 +106,11 @@ public class ExplorationEventListener {
                 LOGGER.info("[DEBUG] Player " + player.getDisplayName() + " leaving world " + worldName + " (world shutting down)");
 
                 WorldMapTracker tracker = player.getWorldMapTracker();
-                if (tracker != null) {
-                    LOGGER.info("[DEBUG] Unhooking tracker for " + player.getDisplayName());
-                    WorldMapHook.unhookPlayerMapTracker(player, tracker);
-                } else {
-                    LOGGER.warning("[DEBUG] Tracker is null for " + player.getDisplayName());
-                }
+                LOGGER.info("[DEBUG] Unhooking tracker for " + player.getDisplayName());
+                WorldMapHook.unhookPlayerMapTracker(player, tracker);
 
                 if (isDefaultWorld(world)) {
-                    UUID uuid = holder.getComponent(UUIDComponent.getComponentType()).getUuid();
+                    UUID uuid = playerRef.getUuid();
                     ExplorationManager.getInstance().savePlayerData(player.getDisplayName(), uuid, worldName);
                 }
 
@@ -158,14 +153,12 @@ public class ExplorationEventListener {
                     LOGGER.info("[DEBUG] WORLD CHANGE DETECTED: " + playerName + " from " + oldWorldName + " to " + newWorldName);
 
                     WorldMapTracker tracker = player.getWorldMapTracker();
-                    if (tracker != null) {
-                        LOGGER.info("[DEBUG] Unhooking tracker for old world " + oldWorldName);
-                        WorldMapHook.unhookPlayerMapTracker(player, tracker);
-                    }
+                    LOGGER.info("[DEBUG] Unhooking tracker for old world " + oldWorldName);
+                    WorldMapHook.unhookPlayerMapTracker(player, tracker);
 
                     if (isDefaultWorld(oldWorld)) {
                         LOGGER.info("[DEBUG] Saving data for default world");
-                        UUID uuid = holder.getComponent(UUIDComponent.getComponentType()).getUuid();
+                        UUID uuid = playerRef.getUuid();
                         ExplorationManager.getInstance().savePlayerData(playerName, uuid, oldWorldName);
                     }
 
@@ -174,9 +167,7 @@ public class ExplorationEventListener {
 
                 if (!isDefaultWorld(newWorld)) {
                     WorldMapTracker tracker = player.getWorldMapTracker();
-                    if (tracker != null) {
-                        WorldMapHook.restoreVanillaMapTracker(player, tracker);
-                    }
+                    WorldMapHook.restoreVanillaMapTracker(player, tracker);
                 } else if (oldWorldName == null || !oldWorldName.equals(newWorldName)) {
                     LOGGER.info("[DEBUG] Initializing exploration for " + playerName + " in world " + newWorldName);
 
@@ -192,29 +183,26 @@ public class ExplorationEventListener {
                     ExplorationManager.getInstance().loadPlayerData(player, newWorldName);
 
                     WorldMapTracker tracker = player.getWorldMapTracker();
-                    if (tracker != null) {
-                        LOGGER.info("[DEBUG] Hooking tracker for world " + newWorldName);
-                        WorldMapHook.hookPlayerMapTracker(player, tracker);
-                        WorldMapHook.hookWorldMapResolution(newWorld);
+                    LOGGER.info("[DEBUG] Hooking tracker for world " + newWorldName);
+                    WorldMapHook.hookPlayerMapTracker(player, tracker);
+                    WorldMapHook.hookWorldMapResolution(newWorld);
 
-                        WorldMapTracker finalTracker = tracker;
-                        ExplorationTicker.getInstance().scheduleUpdate(() -> {
-                            LOGGER.info("[DEBUG] Scheduled immediate update executing for " + playerName);
-                            TransformComponent tc = holder.getComponent(TransformComponent.getComponentType());
-                            if (tc != null) {
-                                var pos = tc.getPosition();
-                                WorldMapHook.updateExplorationState(player, finalTracker, pos.x, pos.z);
-                            } else {
-                                LOGGER.warning("[DEBUG] TransformComponent expected but null for immediate update");
-                            }
+                    ExplorationTicker.getInstance().scheduleUpdate(() -> {
+                        LOGGER.info("[DEBUG] Scheduled immediate update executing for " + playerName);
+                        TransformComponent tc = holder.getComponent(TransformComponent.getComponentType());
+                        if (tc != null) {
+                            var pos = tc.getPosition();
+                            WorldMapHook.updateExplorationState(player, tracker, pos.x, pos.z);
+                        } else {
+                            LOGGER.warning("[DEBUG] TransformComponent expected but null for immediate update");
+                        }
 
-                            try {
-                                ReflectionHelper.setFieldValueRecursive(finalTracker, "updateTimer", 0.0f);
-                            } catch (Exception e) {
-                                LOGGER.warning("[DEBUG] Could not reset updateTimer: " + e.getMessage());
-                            }
-                        });
-                    }
+                        try {
+                            ReflectionHelper.setFieldValueRecursive(tracker, "updateTimer", 0.0f);
+                        } catch (Exception e) {
+                            LOGGER.warning("[DEBUG] Could not reset updateTimer: " + e.getMessage());
+                        }
+                    });
                 }
 
                 playerWorlds.put(playerName, newWorldName);
@@ -236,45 +224,43 @@ public class ExplorationEventListener {
         try {
             PlayerRef playerRef = event.getPlayerRef();
 
-            if (playerRef != null) {
-                String playerName = playerRef.getUsername();
-                java.util.UUID playerUUID = playerRef.getUuid();
+            String playerName = playerRef.getUsername();
+            UUID playerUUID = playerRef.getUuid();
 
-                PlayerConfigManager.getInstance().unloadPlayerConfig(playerUUID);
+            PlayerConfigManager.getInstance().unloadPlayerConfig(playerUUID);
 
-                LOGGER.info("[DEBUG] Player " + playerName + " disconnecting from server");
+            LOGGER.info("[DEBUG] Player " + playerName + " disconnecting from server");
 
-                ExplorationTracker.PlayerExplorationData data = ExplorationTracker.getInstance().getPlayerData(playerName);
-                LOGGER.info("[DEBUG] Exploration data exists: " + (data != null));
+            ExplorationTracker.PlayerExplorationData data = ExplorationTracker.getInstance().getPlayerData(playerName);
+            LOGGER.info("[DEBUG] Exploration data exists: " + (data != null));
 
-                if (data != null) {
-                    LOGGER.info("[DEBUG] Data still exists, performing fallback save");
-                    Ref<EntityStore> ref = playerRef.getReference();
-                    if (ref != null && ref.isValid()) {
-                        try {
-                            Store<EntityStore> store = ref.getStore();
-                            World world = store.getExternalData().getWorld();
-                            String worldName = world.getName();
+            if (data != null) {
+                LOGGER.info("[DEBUG] Data still exists, performing fallback save");
+                Ref<EntityStore> ref = playerRef.getReference();
+                if (ref != null && ref.isValid()) {
+                    try {
+                        Store<EntityStore> store = ref.getStore();
+                        World world = store.getExternalData().getWorld();
+                        String worldName = world.getName();
 
-                            if (isDefaultWorld(world)) {
-                                LOGGER.info("[DEBUG] Fallback save for player " + playerName + " disconnecting from default world");
-                                ExplorationManager.getInstance().savePlayerData(playerName, playerUUID, worldName);
-                            }
-                            ExplorationTracker.getInstance().removePlayerData(playerName);
-                        } catch (Exception e) {
-                            LOGGER.warning("Could not determine world for fallback save: " + e.getMessage());
-                            ExplorationTracker.getInstance().removePlayerData(playerName);
+                        if (isDefaultWorld(world)) {
+                            LOGGER.info("[DEBUG] Fallback save for player " + playerName + " disconnecting from default world");
+                            ExplorationManager.getInstance().savePlayerData(playerName, playerUUID, worldName);
                         }
-                    } else {
+                        ExplorationTracker.getInstance().removePlayerData(playerName);
+                    } catch (Exception e) {
+                        LOGGER.warning("Could not determine world for fallback save: " + e.getMessage());
                         ExplorationTracker.getInstance().removePlayerData(playerName);
                     }
                 } else {
-                    LOGGER.info("Player " + playerName + " disconnect - data already saved");
+                    ExplorationTracker.getInstance().removePlayerData(playerName);
                 }
-
-                playerWorlds.remove(playerName);
-                LOGGER.info("[DEBUG] Removed world tracking for " + playerName);
+            } else {
+                LOGGER.info("Player " + playerName + " disconnect - data already saved");
             }
+
+            playerWorlds.remove(playerName);
+            LOGGER.info("[DEBUG] Removed world tracking for " + playerName);
         } catch (Exception e) {
             LOGGER.warning("Failed to handle player quit event: " + e.getMessage());
         }

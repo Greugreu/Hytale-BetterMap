@@ -163,18 +163,15 @@ public class ReflectionHelper {
      * @param instance  The instance.
      * @param fieldName The field name.
      * @param value     The new value.
-     * @return True if successful.
      */
-    public static boolean setFieldValueRecursive(@Nonnull Object instance, @Nonnull String fieldName, @Nullable Object value) {
+    public static void setFieldValueRecursive(@Nonnull Object instance, @Nonnull String fieldName, @Nullable Object value) {
         try {
             Field field = getFieldRecursive(instance.getClass(), fieldName);
             if (field != null) {
                 field.set(instance, value);
-                return true;
             }
         } catch (IllegalAccessException e) {
             LOGGER.warning("Cannot access field recursively for setting: " + fieldName);
         }
-        return false;
     }
 }

@@ -64,14 +64,14 @@ public class LocationHud extends CustomUIHud {
      * @param store          The global entity store.
      * @param commandBuffer  The command buffer for scheduling updates.
      */
-    @SuppressWarnings({"unchecked", "unused"})
+    @SuppressWarnings({"unused"})
     public void updateHud(float dt, int index, @Nonnull ArchetypeChunk<EntityStore> archetypeChunk,
                          @Nonnull Store<EntityStore> store, @Nonnull CommandBuffer<EntityStore> commandBuffer) {
         if (!this.isEnabled) return;
 
-        Holder holder = EntityUtils.toHolder(index, archetypeChunk);
-        Player player = (Player) holder.getComponent(Player.getComponentType());
-        TransformComponent transformComponent = (TransformComponent) holder.getComponent(TransformComponent.getComponentType());
+        Holder<EntityStore> holder = EntityUtils.toHolder(index, archetypeChunk);
+        Player player = holder.getComponent(Player.getComponentType());
+        TransformComponent transformComponent = holder.getComponent(TransformComponent.getComponentType());
 
         if (player != null && transformComponent != null && player.getWorld() != null) {
             this.playerPosition = transformComponent.getPosition().clone();

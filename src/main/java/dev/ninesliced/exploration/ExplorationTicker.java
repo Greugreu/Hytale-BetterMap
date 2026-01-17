@@ -111,14 +111,10 @@ public class ExplorationTicker {
                                 }
 
                                 WorldMapTracker tracker = player.getWorldMapTracker();
-                                if (tracker != null) {
-                                    TransformComponent tc = playerRef.getStore().getComponent(playerRef, TransformComponent.getComponentType());
-                                    if (tc != null) {
-                                        var pos = tc.getPosition();
-                                        WorldMapHook.updateExplorationState(player, tracker, pos.x, pos.z);
-                                    }
-                                } else {
-                                    LOGGER.warning("WorldMapTracker is null for " + player.getDisplayName());
+                                TransformComponent tc = playerRef.getStore().getComponent(playerRef, TransformComponent.getComponentType());
+                                if (tc != null) {
+                                    var pos = tc.getPosition();
+                                    WorldMapHook.updateExplorationState(player, tracker, pos.x, pos.z);
                                 }
                             }
                         }

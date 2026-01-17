@@ -49,7 +49,6 @@ public class PlayerLocationCommand extends AbstractCommand {
         }
 
         var store = ref.getStore();
-        if (store == null) return CompletableFuture.completedFuture(null);
 
         World world = store.getExternalData().getWorld();
 

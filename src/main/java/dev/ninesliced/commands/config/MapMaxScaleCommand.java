@@ -6,11 +6,9 @@ import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.hypixel.hytale.server.core.command.system.arguments.types.ArgumentType;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.world.World;
 import dev.ninesliced.configs.BetterMapConfig;
-import dev.ninesliced.utils.WorldMapHook;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -21,7 +19,7 @@ import java.util.concurrent.CompletableFuture;
  * Command to set the maximum map scale (zoom in level).
  */
 public class MapMaxScaleCommand extends AbstractCommand {
-    private final RequiredArg<Float> zoomValueArg = (RequiredArg<Float>) this.withRequiredArg("value", "Max zoom value", (ArgumentType) ArgTypes.FLOAT);
+    private final RequiredArg<Float> zoomValueArg = this.withRequiredArg("value", "Max zoom value", ArgTypes.FLOAT);
 
     /**
      * Constructs the MapMaxScale command.
@@ -49,8 +47,8 @@ public class MapMaxScaleCommand extends AbstractCommand {
             return CompletableFuture.completedFuture(null);
         }
         try {
-            Float newMax = (Float) context.get(this.zoomValueArg);
-            if (newMax.floatValue() <= 0.0f) {
+            Float newMax = context.get(this.zoomValueArg);
+            if (newMax <= 0.0f) {
                 context.sendMessage(Message.raw("Max scale must be greater than 0").color(Color.RED));
                 return CompletableFuture.completedFuture(null);
             }
@@ -90,8 +88,7 @@ public class MapMaxScaleCommand extends AbstractCommand {
             if (sender instanceof Player) {
                 return ((Player) sender).getWorld();
             }
-        } catch (Exception exception) {
-        }
+        } catch (Exception _) {}
         return null;
     }
 }

@@ -5,7 +5,6 @@ import com.hypixel.hytale.server.core.command.system.AbstractCommand;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
-import com.hypixel.hytale.server.core.command.system.arguments.types.ArgumentType;
 import dev.ninesliced.configs.BetterMapConfig;
 
 import javax.annotation.Nonnull;
@@ -17,8 +16,7 @@ import java.util.concurrent.CompletableFuture;
  * Command to set the exploration radius (in chunks).
  */
 public class MapExplorationRadiusCommand extends AbstractCommand {
-    @SuppressWarnings("unchecked")
-    private final RequiredArg<Integer> radiusArg = (RequiredArg<Integer>) this.withRequiredArg("radius", "Exploration radius in chunks", (ArgumentType) ArgTypes.INTEGER);
+    private final RequiredArg<Integer> radiusArg = this.withRequiredArg("radius", "Exploration radius in chunks", ArgTypes.INTEGER);
 
     /**
      * Constructs the MapExplorationRadiusCommand.
@@ -42,7 +40,7 @@ public class MapExplorationRadiusCommand extends AbstractCommand {
     @Override
     protected CompletableFuture<Void> execute(@Nonnull CommandContext context) {
         try {
-            Integer newRadius = (Integer) context.get(this.radiusArg);
+            Integer newRadius = context.get(this.radiusArg);
             if (newRadius <= 0) {
                 context.sendMessage(Message.raw("Radius must be greater than 0").color(Color.RED));
                 return CompletableFuture.completedFuture(null);

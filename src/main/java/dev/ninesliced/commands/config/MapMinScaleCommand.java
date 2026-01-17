@@ -87,8 +87,7 @@ public class MapMinScaleCommand extends AbstractCommand {
             if (sender instanceof Player) {
                 return ((Player) sender).getWorld();
             }
-        } catch (Exception exception) {
-        }
+        } catch (Exception _) {}
         return null;
     }
 }

@@ -5,7 +5,7 @@ import com.hypixel.hytale.protocol.Packet;
 import com.hypixel.hytale.protocol.packets.worldmap.MapChunk;
 import com.hypixel.hytale.protocol.packets.worldmap.UpdateWorldMap;
 import com.hypixel.hytale.protocol.packets.worldmap.UpdateWorldMapSettings;
-import com.hypixel.hytale.server.core.entity.UUIDComponent;
+import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.WorldMapTracker;
@@ -74,8 +74,8 @@ public class WorldMapHook {
 
             try {
                 Object pendingReloadFutures = ReflectionHelper.getFieldValueRecursive(tracker, "pendingReloadFutures");
-                if (pendingReloadFutures instanceof java.util.Map) {
-                    ((java.util.Map<?, ?>) pendingReloadFutures).clear();
+                if (pendingReloadFutures instanceof Map) {
+                    ((Map<?, ?>) pendingReloadFutures).clear();
                 }
             } catch (Exception e) {
                 LOGGER.warning("Could not clear pendingReloadFutures: " + e.getMessage());
@@ -83,8 +83,8 @@ public class WorldMapHook {
 
             try {
                 Object pendingReloadChunks = ReflectionHelper.getFieldValueRecursive(tracker, "pendingReloadChunks");
-                if (pendingReloadChunks instanceof java.util.Set) {
-                    ((java.util.Set<?>) pendingReloadChunks).clear();
+                if (pendingReloadChunks instanceof Set) {
+                    ((Set<?>) pendingReloadChunks).clear();
                 }
             } catch (Exception e) {
                 LOGGER.warning("Could not clear pendingReloadChunks: " + e.getMessage());
@@ -92,8 +92,7 @@ public class WorldMapHook {
 
             try {
                 ReflectionHelper.setFieldValueRecursive(tracker, "updateTimer", 999.0f);
-            } catch (Exception e) {
-            }
+            } catch (Exception _) {}
 
             LOGGER.info("Unhooked map tracker for player: " + player.getDisplayName());
         } catch (Exception e) {
@@ -133,11 +132,9 @@ public class WorldMapHook {
         try {
             LOGGER.info("Hooking WorldMap resolution for world: " + world.getName());
             WorldMapManager manager = world.getWorldMapManager();
-            if (manager == null) return;
 
             LOGGER.info("Modifying WorldMapSettings for world: " + world.getName());
             WorldMapSettings settings = manager.getWorldMapSettings();
-            if (settings == null) return;
 
             BetterMapConfig.MapQuality quality = BetterMapConfig.getInstance().getActiveMapQuality();
             ReflectionHelper.setFieldValueRecursive(settings, "imageScale", quality.scale);
@@ -194,13 +191,15 @@ public class WorldMapHook {
     private static void manageLoadedChunks(@Nonnull Player player, @Nonnull WorldMapTracker tracker, int cx, int cz) {
         try {
             Object loadedObj = ReflectionHelper.getFieldValueRecursive(tracker, "loaded");
-            if (!(loadedObj instanceof Set)) return;
-
+            if (!(loadedObj instanceof Set))
+                return;
+            
             @SuppressWarnings("unchecked")
             Set<Long> loaded = (Set<Long>) loadedObj;
 
             Object spiralIterator = ReflectionHelper.getFieldValueRecursive(tracker, "spiralIterator");
-            if (!(spiralIterator instanceof RestrictedSpiralIterator)) return;
+            if (!(spiralIterator instanceof RestrictedSpiralIterator))
+                return;
 
             List<Long> targetChunks = ((RestrictedSpiralIterator) spiralIterator).getTargetMapChunks();
             Set<Long> targetSet = new HashSet<>(targetChunks);
@@ -221,14 +220,14 @@ public class WorldMapHook {
 
             if (toUnload.isEmpty()) return;
 
-            loaded.removeAll(toUnload);
+            toUnload.forEach(loaded::remove);
 
             UpdateWorldMap packet = new UpdateWorldMap(
                     unloadPackets.toArray(new MapChunk[0]),
                     null,
                     null
             );
-            sendPacket(player, (Packet) packet);
+            sendPacket(player, packet);
 
         } catch (Exception e) {
             LOGGER.warning("Failed to manage loaded chunks: " + e.getMessage());
@@ -248,9 +247,7 @@ public class WorldMapHook {
     private static void forceTrackerUpdate(@Nonnull Player player, @Nonnull WorldMapTracker tracker, double x, double z) {
         try {
             Object spiralIterator = ReflectionHelper.getFieldValueRecursive(tracker, "spiralIterator");
-            if (spiralIterator instanceof RestrictedSpiralIterator) {
-                RestrictedSpiralIterator restrictedIterator = (RestrictedSpiralIterator) spiralIterator;
-
+            if (spiralIterator instanceof RestrictedSpiralIterator restrictedIterator) {
                 int chunkX = (int) Math.floor(x) >> 5;
                 int chunkZ = (int) Math.floor(z) >> 5;
 
@@ -310,39 +307,36 @@ public class WorldMapHook {
     public static void sendMapSettingsToPlayer(@Nonnull Player player) {
         try {
             World world = player.getWorld();
-            if (world == null) return;
+            if (world == null)
+                return;
 
             updateWorldMapConfigs(world);
 
             WorldMapSettings settings = world.getWorldMapManager().getWorldMapSettings();
             UpdateWorldMapSettings packet = (UpdateWorldMapSettings) ReflectionHelper.getFieldValue(settings, "settingsPacket");
 
-            if (packet != null) {
-                synchronized (packet) {
-                    float originalMin = packet.minScale;
-                    float originalMax = packet.maxScale;
+            if (packet == null)
+                return;
 
-                    Ref<EntityStore> ref = player.getReference();
-                    if (ref == null || !ref.isValid())
-                        return;
+            synchronized (packet) {
+                float originalMin = packet.minScale;
+                float originalMax = packet.maxScale;
 
-                    UUIDComponent uuidComp = ref.getStore().getComponent(ref, UUIDComponent.getComponentType());
-                    PlayerConfig playerConfig = PlayerConfigManager.getInstance().getPlayerConfig(uuidComp.getUuid());
+                PlayerConfig playerConfig = PlayerConfigManager.getInstance().getPlayerConfig(((CommandSender) player).getUuid());
 
-                    if (playerConfig != null) {
-                        packet.minScale = playerConfig.getMinScale();
-                        packet.maxScale = playerConfig.getMaxScale();
-                    }
-
-                    sendPacket(player, packet);
-
-                    if (playerConfig != null) {
-                        packet.minScale = originalMin;
-                        packet.maxScale = originalMax;
-                    }
+                if (playerConfig != null) {
+                    packet.minScale = playerConfig.getMinScale();
+                    packet.maxScale = playerConfig.getMaxScale();
                 }
-                LOGGER.fine("Sent custom map settings to " + player.getDisplayName());
+
+                sendPacket(player, packet);
+
+                if (playerConfig != null) {
+                    packet.minScale = originalMin;
+                    packet.maxScale = originalMax;
+                }
             }
+            LOGGER.fine("Sent custom map settings to " + player.getDisplayName());
         } catch (Exception e) {
             LOGGER.warning("Failed to send map settings to player: " + e.getMessage());
         }
@@ -387,7 +381,7 @@ public class WorldMapHook {
         @Override
         public void init(int cx, int cz, int startRadius, int endRadius) {
             if (stopped) {
-                this.currentIterator = java.util.Collections.emptyIterator();
+                this.currentIterator = Collections.emptyIterator();
                 return;
             }
 
@@ -455,18 +449,15 @@ public class WorldMapHook {
         private void cleanupFarChunks(List<Long> keepChunks) {
             try {
                 Object loadedObj = ReflectionHelper.getFieldValue(tracker, "loaded");
-                if (loadedObj instanceof java.util.Set) {
-                    java.util.Set<?> loadedSet = (java.util.Set<?>) loadedObj;
-
+                if (loadedObj instanceof Set<?> loadedSet) {
                     if (loadedSet.size() > 20000) {
-                        java.util.Set<Long> keepSet = new HashSet<>(keepChunks);
+                        Set<Long> keepSet = new HashSet<>(keepChunks);
                         List<MapChunk> toRemovePackets = new ArrayList<>();
 
                         Iterator<?> it = loadedSet.iterator();
                         while (it.hasNext()) {
                             Object obj = it.next();
-                            if (obj instanceof Long) {
-                                Long idx = (Long) obj;
+                            if (obj instanceof Long idx) {
                                 if (!keepSet.contains(idx)) {
                                     it.remove();
                                     int mx = com.hypixel.hytale.math.util.ChunkUtil.xOfChunkIndex(idx);

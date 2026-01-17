@@ -18,8 +18,6 @@ public class ExplorationPlayerSetupSystem extends RefSystem<EntityStore> {
     @Nonnull
     private final ComponentType<EntityStore, ExplorationComponent> explorationComponentType;
     @Nonnull
-    private final ComponentType<EntityStore, Player> playerComponentType;
-    @Nonnull
     private final Query<EntityStore> query;
 
     /**
@@ -27,7 +25,7 @@ public class ExplorationPlayerSetupSystem extends RefSystem<EntityStore> {
      */
     public ExplorationPlayerSetupSystem() {
         this.explorationComponentType = BetterMap.get().getExplorationComponentType();
-        this.playerComponentType = Player.getComponentType();
+        ComponentType<EntityStore, Player> playerComponentType = Player.getComponentType();
         this.query = Query.and(playerComponentType);
     }
 
