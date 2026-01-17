@@ -3,13 +3,17 @@ package dev.ninesliced.managers;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
+import com.hypixel.hytale.component.Holder;
 import com.hypixel.hytale.protocol.Transform;
 import com.hypixel.hytale.protocol.packets.worldmap.ContextMenuItem;
 import com.hypixel.hytale.protocol.packets.worldmap.MapMarker;
+import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.data.PlayerWorldData;
+import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.PositionUtil;
 import dev.ninesliced.listeners.ExplorationEventListener;
 import dev.ninesliced.utils.PermissionsUtil;
@@ -160,7 +164,11 @@ public class WaypointManager {
         if (PermissionsUtil.canTeleport(player)) {
             menuItems.add(new ContextMenuItem("Teleport To", "bm waypoint teleport " + markerId));
         }
-        menuItems.add(new ContextMenuItem("Delete", "bm waypoint remove " + markerId));
+        if (isGlobal) {
+            menuItems.add(new ContextMenuItem("Delete", "bm waypoint removeglobal " + markerId));
+        } else {
+            menuItems.add(new ContextMenuItem("Delete", "bm waypoint remove " + markerId));
+        }
         return menuItems.isEmpty() ? null : menuItems.toArray(new ContextMenuItem[0]);
     }
 
@@ -229,7 +237,7 @@ public class WaypointManager {
             return;
         }
 
-        UUID uuid = player.getUuid();
+        UUID uuid = ((CommandSender) player).getUuid();
         if (!loadedPlayers.add(uuid)) {
             return;
         }
@@ -292,12 +300,12 @@ public class WaypointManager {
         for (MapMarker marker : markers) {
             if (marker == null || marker.id == null) continue;
             if (isGlobalId(marker.id)) continue;
-            StoredWaypoint waypoint = fromMarker(marker, worldName, player.getDisplayName(), player.getUuid(), false);
+            StoredWaypoint waypoint = fromMarker(marker, worldName, player.getDisplayName(), ((CommandSender) player).getUuid(), false);
             if (waypoint != null) {
                 stored.add(waypoint);
             }
         }
-        persistence.savePlayer(player.getUuid(), player.getDisplayName(), worldName, stored);
+        persistence.savePlayer(((CommandSender) player).getUuid(), player.getDisplayName(), worldName, stored);
     }
 
     private static void saveGlobalMarker(@Nonnull MapMarker marker, @Nonnull World world, @Nonnull Player player) {
@@ -306,14 +314,19 @@ public class WaypointManager {
         }
         List<StoredWaypoint> existing = persistence.loadGlobal();
         List<StoredWaypoint> mutable = new ArrayList<>(existing);
-        StoredWaypoint converted = fromMarker(marker, world.getName(), player.getDisplayName(), player.getUuid(), true);
+        StoredWaypoint converted = fromMarker(marker, world.getName(), player.getDisplayName(), ((CommandSender) player).getUuid(), true);
         if (converted == null) {
             return;
         }
         mutable.add(converted);
         persistence.saveGlobal(mutable);
 
-        for (Player p : world.getPlayers()) {
+        for (PlayerRef playerRef : world.getPlayerRefs()) {
+            Holder<EntityStore> holder = playerRef.getHolder();
+            if (holder == null) continue;
+            Player p = holder.getComponent(Player.getComponentType());
+            if (p == null) continue;
+
             refreshPlayerMarkers(p);
         }
     }
@@ -337,7 +350,12 @@ public class WaypointManager {
 
             World world = Universe.get().getWorld(worldName);
             if (world != null) {
-                for (Player p : world.getPlayers()) {
+                for (PlayerRef playerRef : world.getPlayerRefs()) {
+                    Holder<EntityStore> holder = playerRef.getHolder();
+                    if (holder == null) continue;
+                    Player p = holder.getComponent(Player.getComponentType());
+                    if (p == null) continue;
+
                     refreshPlayerMarkers(p);
                 }
             }
@@ -392,7 +410,12 @@ public class WaypointManager {
 
             World world = Universe.get().getWorld(worldName);
             if (world != null) {
-                for (Player p : world.getPlayers()) {
+                for (PlayerRef playerRef : world.getPlayerRefs()) {
+                    Holder<EntityStore> holder = playerRef.getHolder();
+                    if (holder == null) continue;
+                    Player p = holder.getComponent(Player.getComponentType());
+                    if (p == null) continue;
+
                     refreshPlayerMarkers(p);
                 }
             }
@@ -434,7 +457,7 @@ public class WaypointManager {
         return icon + ".png";
     }
 
-    private static boolean isGlobalId(@Nonnull String id) {
+    public static boolean isGlobalId(@Nonnull String id) {
         return id.startsWith(GLOBAL_ID_PREFIX);
     }
 

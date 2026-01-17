@@ -2,34 +2,32 @@ package dev.ninesliced.commands;
 
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
-import com.hypixel.hytale.protocol.packets.worldmap.MapMarker;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.arguments.system.RequiredArg;
 import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.entity.entities.player.data.PlayerWorldData;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
-import dev.ninesliced.utils.PermissionsUtil;
 import dev.ninesliced.managers.WaypointManager;
-import java.util.ArrayList;
-import java.util.List;
+import dev.ninesliced.utils.PermissionsUtil;
+import com.hypixel.hytale.protocol.packets.worldmap.MapMarker;
+
 import javax.annotation.Nonnull;
 
-public class BetterMapWaypointDeleteCommand extends AbstractPlayerCommand {
-    private final RequiredArg<String> targetArg = this.withRequiredArg("target", "Waypoint name or marker id", ArgTypes.STRING);
+public class BetterMapWaypointDeleteGlobalCommand extends AbstractPlayerCommand {
+    private final RequiredArg<String> targetArg = this.withRequiredArg("target", "Global waypoint id", ArgTypes.STRING);
 
     @Override
     protected String generatePermissionNode() {
-        return "";
+        return "waypoint.global";
     }
 
-    public BetterMapWaypointDeleteCommand() {
-        super("remove", "Remove a map waypoint by name");
-        this.addAliases("delete", "del");
+    public BetterMapWaypointDeleteGlobalCommand() {
+        super("removeglobal", "Remove a global map waypoint");
+        this.addAliases("deleteglobal", "delglobal");
     }
 
     @Override
@@ -37,22 +35,31 @@ public class BetterMapWaypointDeleteCommand extends AbstractPlayerCommand {
         Player player = store.getComponent(ref, Player.getComponentType());
         if (player == null) return;
 
+        if (!PermissionsUtil.canUseGlobalWaypoints(player)) {
+            context.sendMessage(Message.raw("You do not have permission to delete global waypoints."));
+            return;
+        }
+
         String target = this.targetArg.get(context);
         
         MapMarker marker = WaypointManager.findWaypoint(player, target);
-        if (marker != null && WaypointManager.isGlobalId(marker.id)) {
-            if (!PermissionsUtil.canUseGlobalWaypoints(player)) {
-                context.sendMessage(Message.raw("You do not have permission to delete global waypoints."));
-                return;
-            }
+
+        if (marker == null) {
+             context.sendMessage(Message.raw("Could not find global waypoint with that name or id."));
+             return;
         }
 
-        boolean deleted = WaypointManager.removeWaypoint(player, target);
+        if (!WaypointManager.isGlobalId(marker.id)) {
+            context.sendMessage(Message.raw("That is a personal waypoint. Use 'remove' instead of 'removeglobal'."));
+            return;
+        }
+
+        boolean deleted = WaypointManager.removeWaypoint(player, marker.id);
 
         if (deleted) {
-            context.sendMessage(Message.raw("Waypoint has been removed."));
+            context.sendMessage(Message.raw("Global waypoint '" + marker.name + "' has been removed."));
         } else {
-            context.sendMessage(Message.raw("Could not find waypoint with that name or id."));
+            context.sendMessage(Message.raw("Failed to remove global waypoint."));
         }
     }
 }

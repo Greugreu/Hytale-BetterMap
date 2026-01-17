@@ -1,5 +1,6 @@
 package dev.ninesliced.utils;
 
+import com.hypixel.hytale.server.core.command.system.CommandSender;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.permissions.PermissionsModule;
 import java.util.Set;
@@ -16,7 +17,7 @@ public final class PermissionsUtil {
     }
 
     public static boolean isAdmin(@Nonnull Player player) {
-        UUID uuid = player.getUuid();
+        UUID uuid = ((CommandSender) player).getUuid();
         PermissionsModule perms = PermissionsModule.get();
         if (perms == null) {
             return false;
@@ -34,7 +35,7 @@ public final class PermissionsUtil {
             return false;
         }
 
-        UUID uuid = player.getUuid();
+        UUID uuid = ((CommandSender) player).getUuid();
         Set<String> groups = perms.getGroupsForUser(uuid);
         if (groups != null && groups.contains("OP")) {
             return true;
@@ -49,7 +50,7 @@ public final class PermissionsUtil {
             return false;
         }
 
-        UUID uuid = player.getUuid();
+        UUID uuid = ((CommandSender) player).getUuid();
         Set<String> groups = perms.getGroupsForUser(uuid);
         if (groups != null && groups.contains("OP")) {
             return true;

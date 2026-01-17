@@ -14,6 +14,7 @@ public class BetterMapWaypointCommand extends AbstractCommandCollection {
         this.addAliases("marker");
         this.addSubCommand(new BetterMapWaypointAddCommand());
         this.addSubCommand(new BetterMapWaypointDeleteCommand());
+        this.addSubCommand(new BetterMapWaypointDeleteGlobalCommand());
         this.addSubCommand(new BetterMapWaypointListCommand());
         this.addSubCommand(new BetterMapWaypointUpdateCommand());
         this.addSubCommand(new BetterMapWaypointTeleportCommand());

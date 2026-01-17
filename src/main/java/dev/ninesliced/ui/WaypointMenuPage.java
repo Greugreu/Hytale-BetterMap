@@ -8,6 +8,7 @@ import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
 import com.hypixel.hytale.protocol.packets.worldmap.MapMarker;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.InteractiveCustomUIPage;
 import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
@@ -87,7 +88,7 @@ public class WaypointMenuPage extends InteractiveCustomUIPage<WaypointMenuPage.W
             ui.set(itemPath + " #NameLabel.Text", marker.name != null ? marker.name : "Unnamed");
             ui.set(itemPath + " #IconLabel.Text", "[" + colorLabel(marker.markerImage) + "]");
             
-            boolean isGlobal = marker.id != null && marker.id.startsWith("global_waypoint_");
+            boolean isGlobal = WaypointManager.isGlobalId(marker.id);
             ui.set(itemPath + " #SharedLabel.Text", isGlobal ? "(Global)" : "(Local)");
 
             String worldName = player.getWorld() != null ? player.getWorld().getName() : "-";
@@ -120,22 +121,30 @@ public class WaypointMenuPage extends InteractiveCustomUIPage<WaypointMenuPage.W
                 );
             }
 
-            events.addEventBinding(
-                CustomUIEventBindingType.Activating,
-                itemPath + " #EditButton",
-                new EventData()
-                    .put(WaypointGuiData.KEY_TARGET_ID, marker.id)
-                    .put(WaypointGuiData.KEY_ACTION, Action.EDIT.name()),
-                false
-            );
-            events.addEventBinding(
-                CustomUIEventBindingType.Activating,
-                itemPath + " #DeleteButton",
-                new EventData()
-                    .put(WaypointGuiData.KEY_TARGET_ID, marker.id)
-                    .put(WaypointGuiData.KEY_ACTION, Action.DELETE.name()),
-                false
-            );
+            boolean canDelete = !isGlobal || PermissionsUtil.canUseGlobalWaypoints(player);
+            ui.set(itemPath + " #EditButton.Visible", canDelete);
+            if (canDelete) {
+                events.addEventBinding(
+                    CustomUIEventBindingType.Activating,
+                    itemPath + " #EditButton",
+                    new EventData()
+                        .put(WaypointGuiData.KEY_TARGET_ID, marker.id)
+                        .put(WaypointGuiData.KEY_ACTION, Action.EDIT.name()),
+                    false
+                );
+            }
+
+            ui.set(itemPath + " #DeleteButton.Visible", canDelete);
+            if (canDelete) {
+                events.addEventBinding(
+                    CustomUIEventBindingType.Activating,
+                    itemPath + " #DeleteButton",
+                    new EventData()
+                        .put(WaypointGuiData.KEY_TARGET_ID, marker.id)
+                        .put(WaypointGuiData.KEY_ACTION, Action.DELETE.name()),
+                    false
+                );
+            }
 
             index++;
         }
@@ -184,6 +193,10 @@ public class WaypointMenuPage extends InteractiveCustomUIPage<WaypointMenuPage.W
             }
             case DELETE -> {
                 if (data.targetId != null && !data.targetId.isEmpty()) {
+                    if (WaypointManager.isGlobalId(data.targetId) && !PermissionsUtil.canUseGlobalWaypoints(player)) {
+                        player.sendMessage(Message.raw("You do not have permission to delete global waypoints."));
+                        return;
+                    }
                     boolean removed = WaypointManager.removeWaypoint(player, data.targetId);
                     if (removed) {
                         refreshWaypoints(ref, store);
@@ -192,6 +205,10 @@ public class WaypointMenuPage extends InteractiveCustomUIPage<WaypointMenuPage.W
             }
             case EDIT -> {
                 if (data.targetId != null && !data.targetId.isEmpty()) {
+                    if (WaypointManager.isGlobalId(data.targetId) && !PermissionsUtil.canUseGlobalWaypoints(player)) {
+                        player.sendMessage(Message.raw("You do not have permission to delete global waypoints."));
+                        return;
+                    }
                      player.getPageManager().openCustomPage(ref, store, new WaypointEditPage(this.playerRef, data.targetId));
                 }
             }
@@ -207,7 +224,7 @@ public class WaypointMenuPage extends InteractiveCustomUIPage<WaypointMenuPage.W
                             marker.transform.position.y,
                             marker.transform.position.z
                         );
-                        TransformComponent transform = player.getTransformComponent();
+                        TransformComponent transform = store.getComponent(ref, TransformComponent.getComponentType());
                         Vector3f currentRotation = transform != null ? transform.getRotation() : Vector3f.ZERO;
                         Teleport teleport = new Teleport(destination, currentRotation);
                         World world = ((EntityStore) store.getExternalData()).getWorld();
