@@ -27,7 +27,7 @@ public class MapExplorationRadiusCommand extends AbstractCommand {
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.radius";
+        return "radius";
     }
 
     /**

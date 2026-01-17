@@ -15,6 +15,7 @@ import dev.ninesliced.exploration.*;
 import dev.ninesliced.listeners.ExplorationEventListener;
 import dev.ninesliced.managers.ExplorationManager;
 import dev.ninesliced.managers.PlayerConfigManager;
+import dev.ninesliced.managers.WaypointManager;
 import dev.ninesliced.providers.LocationHudProvider;
 import dev.ninesliced.systems.LocationSystem;
 
@@ -94,6 +95,13 @@ public class BetterMap extends JavaPlugin {
 
             PlayerConfigManager.initialize(serverRoot.resolve("mods").resolve("BetterMap"));
             LOGGER.info("Player Config Manager: INITIALIZED");
+
+            Path configDir = BetterMapConfig.getInstance().getConfigDirectory();
+            if (configDir == null) {
+                configDir = serverRoot.resolve("mods").resolve("BetterMap");
+            }
+            WaypointManager.initialize(configDir);
+            LOGGER.info("Waypoint Persistence: INITIALIZED");
 
             ExplorationManager.config()
                     .updateRate(0.5f)

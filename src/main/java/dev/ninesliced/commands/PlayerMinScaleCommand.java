@@ -28,7 +28,7 @@ public class PlayerMinScaleCommand extends AbstractCommand {
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.player.minscale";
+        return "minscale";
     }
 
     @Nullable

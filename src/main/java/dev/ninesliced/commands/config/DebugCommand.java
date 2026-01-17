@@ -27,7 +27,7 @@ public class DebugCommand extends AbstractCommand {
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.debug";
+        return "debug";
     }
 
     /**

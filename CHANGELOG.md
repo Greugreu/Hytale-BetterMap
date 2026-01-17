@@ -29,7 +29,7 @@ The `config.json` has been updated with new parameters:
   "updateRateMs": 500,
   "mapQuality": "MEDIUM", // Load 10000 chunks with 16x16 images
   "minScale": 10.0, // Base zoom out is 32.0
-  "maxScale": 256.0,
+  "maxScale": 256.0, // Base zoom in is 256.0
   "debug": false
 }
 

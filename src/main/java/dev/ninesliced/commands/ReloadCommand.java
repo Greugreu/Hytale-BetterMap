@@ -25,7 +25,7 @@ public class ReloadCommand extends AbstractCommand {
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.reload";
+        return "reload";
     }
 
     /**

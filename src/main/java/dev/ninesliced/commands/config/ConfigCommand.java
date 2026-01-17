@@ -32,7 +32,7 @@ public class ConfigCommand extends AbstractCommand {
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.config";
+        return "config";
     }
 
     @Nullable

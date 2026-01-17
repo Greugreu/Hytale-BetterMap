@@ -266,7 +266,7 @@ public class ExplorationEventListener {
         }
     }
 
-    private static boolean isDefaultWorld(@javax.annotation.Nullable World world) {
+    public static boolean isDefaultWorld(@javax.annotation.Nullable World world) {
         try {
             if (world == null) {
                 return false;

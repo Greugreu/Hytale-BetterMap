@@ -29,6 +29,7 @@ public class BetterMapConfig {
     private boolean shareAllExploration = false;
 
     private transient Path configPath;
+    private transient Path configDir;
     private transient MapQuality activeMapQuality;
 
     /**
@@ -55,12 +56,12 @@ public class BetterMapConfig {
      * @param rootPath The root directory of the server.
      */
     public void initialize(Path rootPath) {
-        Path configDir = rootPath.resolve("mods").resolve("BetterMap");
-        this.configPath = configDir.resolve("config.json");
+        this.configDir = rootPath.resolve("mods").resolve("BetterMap");
+        this.configPath = this.configDir.resolve("config.json");
 
         try {
-            if (!Files.exists(configDir)) {
-                Files.createDirectories(configDir);
+            if (!Files.exists(this.configDir)) {
+                Files.createDirectories(this.configDir);
             }
 
             if (Files.exists(configPath)) {
@@ -73,6 +74,15 @@ public class BetterMapConfig {
         } catch (IOException e) {
             LOGGER.severe("Failed to initialize configuration: " + e.getMessage());
         }
+    }
+
+    /**
+     * Gets the directory where BetterMap stores its config and data files.
+     *
+     * @return The BetterMap config directory path, or null if not initialized.
+     */
+    public Path getConfigDirectory() {
+        return this.configDir;
     }
 
     /**

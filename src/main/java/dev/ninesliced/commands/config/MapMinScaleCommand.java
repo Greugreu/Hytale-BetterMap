@@ -30,7 +30,7 @@ public class MapMinScaleCommand extends AbstractCommand {
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.min";
+        return "min";
     }
 
     /**

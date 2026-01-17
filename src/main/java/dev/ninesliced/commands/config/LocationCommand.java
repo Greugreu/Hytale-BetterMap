@@ -20,6 +20,11 @@ public class LocationCommand extends AbstractCommand {
         super("Location", "Toggle the mini-map HUD display");
     }
 
+    @Override
+    protected String generatePermissionNode() {
+        return "";
+    }
+
     /**
      * Executes the toggle command logic.
      * <p>

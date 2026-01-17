@@ -28,7 +28,7 @@ public class PlayerMaxScaleCommand extends AbstractCommand {
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.player.maxscale";
+        return "maxscale";
     }
 
     @Nullable

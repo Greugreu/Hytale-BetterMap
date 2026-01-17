@@ -30,7 +30,7 @@ public class MapMaxScaleCommand extends AbstractCommand {
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.max";
+        return "max";
     }
 
     /**

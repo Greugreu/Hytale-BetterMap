@@ -23,7 +23,7 @@ public class ShareAllExplorationCommand extends AbstractCommand {
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.config.shareallexploration";
+        return "shareallexploration";
     }
 
     @Override

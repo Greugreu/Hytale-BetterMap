@@ -30,7 +30,7 @@ public class MapQualityCommand extends AbstractCommand {
     @NullableDecl
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap.quality";
+        return "quality";
     }
 
     /**

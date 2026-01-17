@@ -26,6 +26,11 @@ public class PlayerLocationCommand extends AbstractCommand {
         super("location", "Toggle the location HUD display");
     }
 
+    @Override
+    protected String generatePermissionNode() {
+        return "";
+    }
+
     /**
      * Executes the toggle command logic.
      * <p>

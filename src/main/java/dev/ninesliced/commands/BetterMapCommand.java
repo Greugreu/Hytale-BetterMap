@@ -31,11 +31,12 @@ public class BetterMapCommand extends AbstractCommand {
         this.addSubCommand(new PlayerMinScaleCommand());
         this.addSubCommand(new PlayerMaxScaleCommand());
         this.addSubCommand(new PlayerLocationCommand());
+        this.addSubCommand(new BetterMapWaypointCommand());
     }
 
     @Override
     protected String generatePermissionNode() {
-        return "command.bettermap";
+        return "base";
     }
 
     /**
