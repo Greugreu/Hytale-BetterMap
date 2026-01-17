@@ -28,6 +28,7 @@ public class ConfigCommand extends AbstractCommand {
         this.addSubCommand(new MapQualityCommand());
         this.addSubCommand(new LocationCommand());
         this.addSubCommand(new ShareAllExplorationCommand());
+        this.addSubCommand(new MaxChunksToLoadCommand());
     }
 
     @Override

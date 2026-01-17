@@ -27,10 +27,12 @@ public class BetterMapConfig {
     private boolean debug = false;
     private boolean locationEnabled = true;
     private boolean shareAllExploration = false;
+    private int maxChunksToLoad = 10000;
 
     private transient Path configPath;
     private transient Path configDir;
     private transient MapQuality activeMapQuality;
+    private transient int activeMaxChunksToLoad;
 
     /**
      * Private constructor to enforce singleton pattern.
@@ -71,6 +73,7 @@ public class BetterMapConfig {
             }
 
             this.activeMapQuality = this.mapQuality;
+            this.activeMaxChunksToLoad = this.maxChunksToLoad;
         } catch (IOException e) {
             LOGGER.severe("Failed to initialize configuration: " + e.getMessage());
         }
@@ -136,6 +139,19 @@ public class BetterMapConfig {
                         this.shareAllExploration = loaded.shareAllExploration;
                     } else {
                         needsSave = true;
+                    }
+
+                    if (jsonObject.has("maxChunksToLoad")) {
+                        this.maxChunksToLoad = loaded.maxChunksToLoad;
+                    } else {
+                        this.maxChunksToLoad = this.mapQuality.maxChunks;
+                        needsSave = true;
+                    }
+
+                    if (this.maxChunksToLoad > this.mapQuality.maxChunks) {
+                        this.maxChunksToLoad = this.mapQuality.maxChunks;
+                        needsSave = true;
+                        LOGGER.warning("maxChunksToLoad exceeded limit for " + this.mapQuality + " quality. Clamped to " + this.maxChunksToLoad);
                     }
 
                     if (needsSave) {
@@ -231,7 +247,17 @@ public class BetterMapConfig {
         return activeMapQuality != null ? activeMapQuality : mapQuality;
     }
 
+    /**currently active max chunks to load.
+     *
+     * @return The active max chunks.
+     */
+    public int getActiveMaxChunksToLoad() {
+        // If 0 (uninitialized), return current config value as fallback, though it should be init by initialize()
+        return activeMaxChunksToLoad > 0 ? activeMaxChunksToLoad : maxChunksToLoad;
+    }
+
     /**
+     * Gets the 
      * Gets the minimum map scale.
      *
      * @return The minimum scale.
@@ -343,6 +369,25 @@ public class BetterMapConfig {
 
     public void setLocationEnabled(boolean locationEnabled) {
         this.locationEnabled = locationEnabled;
+    }
+
+    /**
+     * Gets the max chunks to load.
+     *
+     * @return The max chunks to load.
+     */
+    public int getMaxChunksToLoad() {
+        return maxChunksToLoad;
+    }
+
+    /**
+     * Sets the max chunks to load and saves config.
+     *
+     * @param maxChunksToLoad The new max chunks limit.
+     */
+    public void setMaxChunksToLoad(int maxChunksToLoad) {
+        this.maxChunksToLoad = maxChunksToLoad;
+        save();
     }
 
     /**
