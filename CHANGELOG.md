@@ -231,3 +231,4 @@ The `config.json` was updated in this version:
 **Credits**
 
 * Mod created by Paralaxe and Theobosse (Team Ninesliced).
+* Special thanks to Xytronix for contributing to this project.

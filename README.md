@@ -197,6 +197,7 @@ Map data is saved per world. You can find the saved exploration files here: `mod
 This project was created to improve the exploration quality of life in Hytale.
 
 * **Created by:** Paralaxe and Theobosse
+* **Contributors:** Xytronix
 * **Team:** [Ninesliced](https://ninesliced.com/)
 
 ## Examples:
