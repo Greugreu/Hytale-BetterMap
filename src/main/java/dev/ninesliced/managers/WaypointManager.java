@@ -342,15 +342,7 @@ public class WaypointManager {
         }
         mutable.add(converted);
         persistence.saveGlobal(mutable);
-
-        for (PlayerRef playerRef : world.getPlayerRefs()) {
-            Holder<EntityStore> holder = playerRef.getHolder();
-            if (holder == null) continue;
-            Player p = holder.getComponent(Player.getComponentType());
-            if (p == null) continue;
-
-            refreshPlayerMarkers(p);
-        }
+        world.execute(() -> refreshAllPlayersMarkers(world));
     }
 
     public static void refreshAllPlayersMarkers(@Nonnull World world) {
@@ -384,17 +376,9 @@ public class WaypointManager {
         }
         if (found) {
             persistence.saveGlobal(updated);
-
             World world = Universe.get().getWorld(worldName);
             if (world != null) {
-                for (PlayerRef playerRef : world.getPlayerRefs()) {
-                    Holder<EntityStore> holder = playerRef.getHolder();
-                    if (holder == null) continue;
-                    Player p = holder.getComponent(Player.getComponentType());
-                    if (p == null) continue;
-
-                    refreshPlayerMarkers(p);
-                }
+                world.execute(() -> refreshAllPlayersMarkers(world));
             }
         }
         return found;
@@ -444,17 +428,9 @@ public class WaypointManager {
         }
         if (found) {
             persistence.saveGlobal(rebuilt);
-
             World world = Universe.get().getWorld(worldName);
             if (world != null) {
-                for (PlayerRef playerRef : world.getPlayerRefs()) {
-                    Holder<EntityStore> holder = playerRef.getHolder();
-                    if (holder == null) continue;
-                    Player p = holder.getComponent(Player.getComponentType());
-                    if (p == null) continue;
-
-                    refreshPlayerMarkers(p);
-                }
+                world.execute(() -> refreshAllPlayersMarkers(world));
             }
         }
         return found;
