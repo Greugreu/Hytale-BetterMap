@@ -1,7 +1,6 @@
 package dev.ninesliced.managers;
 
 import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import dev.ninesliced.configs.ExplorationPersistence;
 import dev.ninesliced.exploration.ExplorationTracker;
@@ -162,19 +161,12 @@ public class ExplorationManager {
 
         Universe universe = Universe.get();
         if (universe != null) {
-            for (PlayerRef playerRef : universe.getPlayers()) {
-                Player player = playerRef.getComponent(Player.getComponentType());
-                if (player == null || player.getWorld() == null) {
+            for (ExplorationTracker.PlayerExplorationData data : ExplorationTracker.getInstance().getAllPlayerDataSnapshot().values()) {
+                String dataWorld = data.getWorldName();
+                if (dataWorld == null || !dataWorld.equals(worldName)) {
                     continue;
                 }
-                if (!worldName.equals(player.getWorld().getName())) {
-                    continue;
-                }
-
-                ExplorationTracker.PlayerExplorationData data = ExplorationTracker.getInstance().getPlayerData(player);
-                if (data != null) {
-                    allChunks.addAll(data.getExploredChunks().getExploredChunks());
-                }
+                allChunks.addAll(data.getExploredChunks().getExploredChunks());
             }
         }
 
