@@ -95,6 +95,18 @@ You can either do `/op add <player>` to give full access or assign specific perm
 * `/bm config hideplayers`
 * Hides player cursors on the map.
 
+* `/bm config hidewarps`
+* Hides other players' warps on the map.
+
+* `/bm config hideunexploredwarps`
+* Hides warps in unexplored regions.
+
+* `/bm config hidepois`
+* Hides all POI markers on the map.
+
+* `/bm config hideunexploredpoi`
+* Hides POIs in unexplored regions.
+
 * `/bm config waypointteleport`
 * Toggles waypoint teleports.
 
@@ -149,8 +161,13 @@ You can modify the plugin settings in `mods/bettermap/config.json`.
   "radarEnabled": true,
   "radarRange": -1,
   "hidePlayersOnMap": false,
+  "hideOtherWarpsOnMap": false,
+  "hideUnexploredWarpsOnMap": true,
   "allowWaypointTeleports": true,
   "allowMapMarkerTeleports": true,
+  "hideAllPoiOnMap": false,
+  "hideUnexploredPoiOnMap": true,
+  "hiddenPoiNames": [],
   "autoSaveInterval": 5,
   "allowedWorlds": [
     "default",
