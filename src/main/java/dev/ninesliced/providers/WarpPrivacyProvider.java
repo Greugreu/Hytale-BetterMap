@@ -2,6 +2,7 @@ package dev.ninesliced.providers;
 
 import com.hypixel.hytale.builtin.teleport.TeleportPlugin;
 import com.hypixel.hytale.builtin.teleport.Warp;
+import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.protocol.packets.worldmap.MapMarker;
@@ -10,6 +11,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.WorldMapTracker;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.universe.world.worldmap.WorldMapManager;
 import com.hypixel.hytale.server.core.util.PositionUtil;
 import dev.ninesliced.configs.BetterMapConfig;
@@ -56,8 +58,7 @@ public class WarpPrivacyProvider implements WorldMapManager.MarkerProvider {
             }
 
             Player viewer = tracker.getPlayer();
-            PlayerRef viewerRef = viewer != null ? viewer.getPlayerRef() : null;
-            String viewerName = viewerRef != null ? viewerRef.getUsername() : null;
+            String viewerName = viewer.getDisplayName();
 
             BetterMapConfig config = BetterMapConfig.getInstance();
             boolean hideOtherWarps = config.isHideOtherWarpsOnMap();

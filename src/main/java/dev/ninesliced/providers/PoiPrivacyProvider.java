@@ -1,5 +1,6 @@
 package dev.ninesliced.providers;
 
+import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.protocol.Position;
 import com.hypixel.hytale.protocol.Transform;
 import com.hypixel.hytale.protocol.packets.worldmap.MapMarker;
@@ -8,6 +9,7 @@ import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.WorldMapTracker;
+import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.universe.world.worldmap.WorldMapManager;
 import dev.ninesliced.configs.BetterMapConfig;
 import dev.ninesliced.exploration.ExplorationTracker;
@@ -43,7 +45,6 @@ public class PoiPrivacyProvider implements WorldMapManager.MarkerProvider {
             }
 
             Player viewer = tracker.getPlayer();
-            PlayerRef viewerRef = viewer != null ? viewer.getPlayerRef() : null;
 
             BetterMapConfig config = BetterMapConfig.getInstance();
             if (config.isHideAllPoiOnMap()) {
@@ -61,7 +62,7 @@ public class PoiPrivacyProvider implements WorldMapManager.MarkerProvider {
             if (hideUnexplored) {
                 if (config.isShareAllExploration()) {
                     sharedExploredChunks = ExplorationManager.getInstance().getAllExploredChunks(world.getName());
-                } else if (viewer != null) {
+                } else {
                     explorationData = ExplorationTracker.getInstance().getPlayerData(viewer);
                 }
             }
