@@ -15,8 +15,16 @@ import javax.annotation.Nonnull;
 public class BetterMapMenuCommand extends AbstractPlayerCommand {
     public BetterMapMenuCommand() {
         super("menu", "Open waypoint menu");
-        this.setPermissionGroup(GameMode.Adventure);
-        this.setPermissionGroup(GameMode.Creative);
+    }
+
+    @Override
+    protected boolean canGeneratePermission() {
+        return false;
+    }
+
+    @Override
+    protected String generatePermissionNode() {
+        return "";
     }
 
     @Override
