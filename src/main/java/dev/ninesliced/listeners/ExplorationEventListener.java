@@ -277,10 +277,12 @@ public class ExplorationEventListener {
         }
     }
 
-    public static boolean isTrackedWorld(@javax.annotation.Nullable World world) {
-        if (world == null) {
-            return false;
-        }
-        return BetterMapConfig.getInstance().isTrackedWorld(world.getName());
+    public boolean isTrackedWorld(String worldName) {
+        if (worldName == null || worldName.isBlank()) return true;
+        if (allowedWorlds == null || allowedWorlds.isEmpty()) return true;
+        if (allowedWorlds.contains("*")) return true;
+
+        return allowedWorlds.contains(worldName);
     }
+
 }
