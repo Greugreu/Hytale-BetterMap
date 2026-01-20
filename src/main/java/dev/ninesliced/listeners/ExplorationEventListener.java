@@ -285,7 +285,7 @@ public class ExplorationEventListener {
         }
     }
 
-    private static boolean isTrackedWorld(World world) {
+    public static boolean isTrackedWorld(World world) {
         if (world == null) return false;
         try {
             return BetterMapConfig.getInstance().isTrackedWorld(world.getName());
